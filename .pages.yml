@@ -136,6 +136,232 @@ content:
               - name: description
                 label: Search description
                 type: text
+  - name: layout_defaults
+    label: Website Layout Defaults
+    type: file
+    path: content/layout-defaults.json
+    format: json
+    fields:
+      - name: homepage_music
+        label: Homepage Music / Releases
+        type: object
+        fields:
+          - name: phone
+            label: Phone (680px and below)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
+          - name: tablet
+            label: Tablet (681–980px)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
+          - name: desktop
+            label: Desktop (above 980px)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
+      - name: homepage_visuals
+        label: Homepage Visual Archive
+        type: object
+        fields:
+          - name: phone
+            label: Phone (680px and below)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
+          - name: tablet
+            label: Tablet (681–980px)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
+          - name: desktop
+            label: Desktop (above 980px)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
+      - name: music
+        label: Music / Recording Vault
+        type: object
+        fields:
+          - name: phone
+            label: Phone (680px and below)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
+          - name: tablet
+            label: Tablet (681–980px)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
+          - name: desktop
+            label: Desktop (above 980px)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
+      - name: visuals
+        label: Full Visual Archive
+        type: object
+        fields:
+          - name: phone
+            label: Phone (680px and below)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
+          - name: tablet
+            label: Tablet (681–980px)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
+          - name: desktop
+            label: Desktop (above 980px)
+            type: select
+            required: true
+            description: Default number of cards per row, unless a visitor changes their own Music/Visual Archive preference.
+            options:
+              values:
+              - name: "1"
+                label: "1 cards per row"
+              - name: "2"
+                label: "2 cards per row"
+              - name: "3"
+                label: "3 cards per row"
+              - name: "4"
+                label: "4 cards per row"
+              - name: "5"
+                label: "5 cards per row"
   - name: homepage_music
     label: Homepage Music / Featured Cards
     type: file
@@ -156,6 +382,15 @@ content:
         label: Visual Archive artwork (instead of a recording)
         type: reference
         description: Choose an artwork if this card is not a recording. Leave blank when a recording is selected.
+        options:
+          collection: visuals
+          value: "{fields.slug}"
+          label: "{fields.title}"
+          search: "title"
+      - name: artwork_visual_override
+        label: Homepage-only artwork from Visual Archive (optional)
+        type: reference
+        description: Optional override for this featured card only. Choose an image from Visual Archive; leaves the original recording cover unchanged.
         options:
           collection: visuals
           value: "{fields.slug}"
@@ -263,6 +498,15 @@ content:
         type: image
         options:
           media: artwork
+      - name: artwork_visual
+        label: Use Visual Archive image as primary cover (optional)
+        type: reference
+        description: If set to a published Visual Archive image, that image becomes this recording's primary cover. Its original uploaded cover is kept as the fallback. Leave empty to use the uploaded cover.
+        options:
+          collection: visuals
+          value: "{fields.slug}"
+          label: "{fields.title}"
+          search: "title"
       - name: featured
         label: Featured near top
         type: boolean
