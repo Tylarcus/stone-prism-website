@@ -62,4 +62,22 @@ for(const pick of built.homeMusic){
 assert.match(fs.readFileSync('script.js','utf8'),/function initHomepageMusic\(\)/,'Home renderer must be available');
 console.log('Homepage CMS: ordered picks, artwork references and draft hiding passed.');
 
+const pageJS=fs.readFileSync('script.js','utf8');
+const cardStart=pageJS.indexOf('function makeRecording(rec){');
+const cardEnd=pageJS.indexOf('function initMusic(){');
+assert.ok(cardStart>=0&&cardEnd>cardStart,'Music library renderer must exist');
+const musicCard=pageJS.slice(cardStart,cardEnd);
+assert.match(musicCard,/sp-recording-cover-tag/,'Type badge must be on cover artwork');
+assert.match(musicCard,/release-foot/,'Card must use homepage foot layout');
+assert.match(musicCard,/release-name/,'Card must show recording title');
+assert.match(musicCard,/release-sub/,'Card must show short CMS description');
+assert.match(musicCard,/play-circle/,'Card must have one circular action');
+assert.doesNotMatch(musicCard,/sp-recording-details|Track details|Watch \/ Details/,'No redundant detail rows allowed');
+const siteCSS=fs.readFileSync('styles.css','utf8');
+assert.match(siteCSS,/\.library-grid \.recording-card \.release-foot/,
+ 'Music page must have compact homepage-style foot layout');
+assert.match(siteCSS,/\.library-grid \.sp-recording-cover-tag/,
+ 'Release badge must overlay cover artwork');
+console.log('Music library cards: compact homepage-style layout and no redundant links passed.');
+
 console.log('Stone Prism Player V2: CMS publishing, audio and video separation checks passed.');

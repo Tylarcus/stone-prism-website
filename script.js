@@ -156,22 +156,39 @@ function cover(src,title){const box=el('div','release-art');const safe=url(src);
  if(safe){const im=el('img');attr(im,{src:safe,alt:`${title} cover art`,loading:'lazy'});box.append(im)}
  else box.append(el('div','recording-cover-placeholder','SP'));
  return box}
+// Keep the Music library visually consistent with the three-across homepage
+// release cards: artwork, title, short caption, one circular action.
+// Release categories live ON the cover, not in a separate tall text row.
 function makeRecording(rec){
  const row=el('article','recording-card');
- const available=(rec.tracks||[]).findIndex(t=>typeof t.audio_url==='string'&&t.audio_url.trim()&&!/(?:youtube\.com|youtu\.be)\//i.test(t.audio_url));
- const canPlay=available!==-1;
- const hit=el(canPlay?'button':'a','sp-recording-hit');
+ const tracks=Array.isArray(rec.tracks)?rec.tracks:[];
+ const available=tracks.findIndex(t=>typeof t.audio_url==='string'&&t.audio_url.trim()&&!/(?:youtube\.com|youtu\.be)\//i.test(t.audio_url));
+ // A multi-track EP or album should open the track list, not arbitrarily play
+ // its first song. One-track audio recordings get genuine one-tap playback.
+ const canPlay=available>=0&&tracks.length===1;
+ const hit=el(canPlay?'button':'a','sp-recording-hit release-card');
  if(canPlay){
   hit.type='button';
   hit.setAttribute('aria-label','Play '+rec.title+' on Stone Prism');
   hit.onclick=()=>window.STONE_PRISM_PLAYER?.playTrack(rec.slug,available);
- }else {hit.href=recordingLink(rec.slug);hit.setAttribute('aria-label','View '+rec.title)}
- hit.append(cover(rec.artwork,rec.title));
- hit.append(el('span','recording-card-tag',prettyType(rec)),el('h3','',rec.title));
- if(rec.description)hit.append(el('p','',rec.description.length>145?rec.description.slice(0,144)+'…':rec.description));
- row.append(hit);
- const details=el('a','sp-recording-details',canPlay?'Track details ↗':'Watch / Details ↗');
- details.href=recordingLink(rec.slug);row.append(details);
+ }else{
+  hit.href=recordingLink(rec.slug);
+  hit.setAttribute('aria-label','Open '+rec.title+' details and tracks');
+ }
+ const art=cover(rec.artwork,rec.title);
+ const format=rec.kind==='demo'?'Demo':({
+  single:'Single',ep:'EP',album:'Album',collection:'Collection'
+ }[rec.release_type]||'Release');
+ art.append(el('span','sp-recording-cover-tag',format));
+ const foot=el('div','release-foot');
+ const copy=el('div','sp-recording-copy');
+ copy.append(el('div','release-name',rec.title));
+ const caption=(rec.description||'').trim();
+ if(caption)copy.append(el('div','release-sub',caption));
+ const circle=el('span','play-circle'+(canPlay?' sp-home-play':''),canPlay?'▶':'↗');
+ circle.setAttribute('aria-hidden','true');
+ foot.append(copy,circle);
+ hit.append(art,foot);row.append(hit);
  return row;
 }
 function initMusic(){
