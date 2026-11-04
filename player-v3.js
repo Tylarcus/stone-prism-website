@@ -26,7 +26,7 @@ function playbackState(){
  if(ui.meter)ui.meter.classList.toggle('is-playing',playing);
  if('mediaSession' in navigator)navigator.mediaSession.playbackState=playing?'playing':'paused';
  if(playing)startVisualizer();
- else cancelAnimationFrame(visualFrame);
+ else {cancelAnimationFrame(visualFrame);visualFrame=0;}
 }
 function updatePosition(){
  if(!element||current<0)return;
@@ -91,6 +91,7 @@ function drawWave(item){
   }
   // Separate paused waveform decoder; the shared audio element plays immediately
   // on the initial tap. Waveform loading never pauses or restarts that audio.
+  ui.wave.hidden=false;ui.seek.hidden=true;
   const instance=WaveSurfer.create({
    container:ui.wave,url:item.source,interact:true,normalize:true,
    height:46,barWidth:2,barGap:2,barRadius:2,
