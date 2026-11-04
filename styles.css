@@ -381,3 +381,63 @@
  .track-play,.track-watch{min-width:0;padding:8px 10px}
 }
 @media(prefers-reduced-motion:reduce){.player-meter.is-playing span{animation:none}.sp-player .player-play{transition:none}}
+
+
+/* Player V3: the dock is outside .site and stays mounted while site pages swap. */
+body.sp-audio-open .site{padding-bottom:152px}
+.sp-recording-hit{display:block;width:100%;padding:0;border:0;text-align:left;background:none;color:inherit;cursor:pointer;text-decoration:none}
+.sp-recording-hit:hover .release-art img,.sp-recording-hit:focus-visible .release-art img{transform:scale(1.035);filter:saturate(1.1)}
+.sp-recording-hit h3{font:inherit;font-size:1rem;font-weight:800;letter-spacing:.11em;margin:12px 0 4px;text-transform:uppercase}
+.sp-recording-hit p{font-size:.78rem;color:#c0af9e;line-height:1.52;margin:6px 0 0}
+.sp-recording-details{display:inline-block;margin-top:12px;text-decoration:none;border-bottom:1px solid #a78e72;color:#e5dfcc;font-size:.73rem;letter-spacing:.06em}
+.sp-recording-details:hover{color:#d0ea68;border-color:#d0ea68}
+.sp-jukebox{position:fixed;bottom:0;left:0;right:0;z-index:999;background:linear-gradient(110deg,#231b22,#151015 66%,#23191e);color:#f2e9db;border-top:3px solid #bbdc54;box-shadow:0 -9px 28px #050305dd;padding:8px max(14px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-right));isolation:isolate}
+.sp-jukebox::before{content:"";height:3px;position:absolute;top:-3px;left:0;right:0;background:linear-gradient(90deg,#c6e55c,#e7a646 33%,#d15b58 68%,#9e71b3)}
+.sp-jukebox[hidden]{display:none!important}
+.sp-jukebox-info,.sp-jukebox-lower{max-width:1240px;margin:0 auto;display:flex;gap:12px;align-items:center}
+.sp-jukebox-info{min-height:45px}
+.sp-jukebox-art{width:43px;height:43px;object-fit:cover;flex:0 0 43px;border:1px solid #7d6c5f}
+.sp-jukebox-meta{min-width:0;flex:1;display:flex;align-items:baseline;gap:12px}
+.sp-jukebox-title{display:block;max-width:38vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem;letter-spacing:.03em}
+.sp-jukebox-album{color:#aa9a8c;font-size:.63rem;letter-spacing:.09em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.sp-jukebox-details{font-size:.69rem;color:#dbdbac;text-decoration:none;white-space:nowrap}
+.sp-jukebox-actions{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.sp-jukebox-button,.sp-jukebox-close{display:inline-grid;place-items:center;width:34px;height:34px;min-width:34px;border:1px solid #73616f;border-radius:3px;background:#291d29;color:#f1e3d3;cursor:pointer;font-size:1.05rem;line-height:1}
+.sp-jukebox-button:hover,.sp-jukebox-button:focus-visible{border-color:#c5e45c;color:#e6f79e}
+.sp-jukebox-button:disabled{opacity:.33;cursor:not-allowed}
+.sp-jukebox-play{background:#c7de54;border-color:#c7de54;color:#16120d;font-size:1.1rem;font-weight:900}
+.sp-jukebox-play:hover,.sp-jukebox-play:focus-visible{background:#e7aa55;color:#15100e}
+.sp-jukebox-close{font-size:1.6rem;border:0;background:none;color:#b8a8a4}
+.sp-jukebox-lower{margin-top:4px;min-height:47px}
+.sp-jukebox-spectrum{display:flex;gap:3px;align-items:center;justify-content:center;flex:0 0 105px;height:35px}
+.sp-jukebox-spectrum span{width:3px;height:7px;max-height:32px;min-height:3px;display:block;border-radius:1px;background:#b9e849}
+.sp-jukebox-spectrum span:nth-child(4n+2){background:#eaa44d}
+.sp-jukebox-spectrum span:nth-child(4n+3){background:#d86657}
+.sp-jukebox-spectrum span:nth-child(4n+4){background:#9f77b8}
+.sp-jukebox-spectrum.is-playing span{animation:sp-meter-pulse .45s ease-in-out infinite alternate}
+.sp-jukebox-spectrum.is-playing span:nth-child(3n){animation-duration:.29s;animation-delay:.12s}
+.sp-jukebox-spectrum.is-playing span:nth-child(4n){animation-duration:.57s;animation-delay:.17s}
+@keyframes sp-meter-pulse{from{transform:scaleY(.65)}to{transform:scaleY(1.18)}}
+.sp-jukebox-timeline{flex:1;min-width:0;display:flex;align-items:center}
+.sp-jukebox-wave{width:100%;min-width:0;cursor:pointer}
+.sp-jukebox-wave[hidden],.sp-jukebox-seek[hidden]{display:none!important}
+.sp-jukebox-seek{width:100%;min-width:0;accent-color:#b9e849;cursor:pointer}
+.sp-jukebox-time{flex:0 0 82px;font-size:.7rem;color:#ddcfc2;font-variant-numeric:tabular-nums;text-align:right}
+.sp-jukebox-status{max-width:1240px;margin:1px auto 0;text-align:left;color:#ab9ca2;font-size:.58rem;min-height:12px}
+@media(max-width:700px){
+ body.sp-audio-open .site{padding-bottom:170px}
+ .sp-jukebox{padding-left:10px;padding-right:10px}
+ .sp-jukebox-info{gap:8px}
+ .sp-jukebox-art{width:40px;height:40px;flex-basis:40px}
+ .sp-jukebox-meta{display:block}
+ .sp-jukebox-title{font-size:.83rem;max-width:100%}
+ .sp-jukebox-album{display:none}
+ .sp-jukebox-details{font-size:.6rem;display:inline-block;margin-top:3px}
+ .sp-jukebox-actions{gap:2px}
+ .sp-jukebox-button{min-width:31px;width:31px;height:34px}
+ .sp-jukebox-close{min-width:28px;width:28px}
+ .sp-jukebox-spectrum{flex-basis:70px;gap:2px}
+ .sp-jukebox-spectrum span{width:2px}
+ .sp-jukebox-time{flex-basis:73px;font-size:.68rem}
+}
+@media(prefers-reduced-motion:reduce){.sp-jukebox-spectrum.is-playing span{animation:none}}
