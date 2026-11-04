@@ -1,10 +1,9 @@
 {
-  "title": "Stone Prism figure",
-  "slug": "stone-prism-figure",
-  "description": "Circular, Vitruvian-inspired artwork",
+  "title": "Anatomy of Frog",
+  "slug": "anatomy-of-frog",
+  "description": "More frog than man. More crust than skin. Drawn with a fountain pen of all things too.",
   "image": "assets/vitruvian.webp",
   "category": "illustration",
-  "order": 20,
   "published": true,
-  "featured_home": true
+  "order": 20
 }
