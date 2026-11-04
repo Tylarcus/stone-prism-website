@@ -10,10 +10,7 @@
   },
   {
     "recording": "oh-the-guilt-demo",
-    "visual": "teeth-concept",
-    "hidden": false
-  },
-  {
+    "artwork_visual_override": "mouthwash-concept-art",
     "hidden": false
   }
 ]
