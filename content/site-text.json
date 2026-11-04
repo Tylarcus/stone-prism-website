@@ -1,7 +1,7 @@
 {
   "home": {
-    "tagline": "Songs, visuals, archives, and noise from Stone Prism.",
-    "about": "Stone Prism is a noise-leaning rock project built on distorted songs, collage visuals, and a fascination with decay, nature, and the in-between. DIY in spirit, rooted in texture, and always a little off-center.",
+    "tagline": "\"Uh hey. We're a band and we love 90s Grunge\"",
+    "about": "\"We the members of the band Stone Prism, in Order to form a more perfect Union, establish Tinitus, insure auditory Tranquility, provide for the common Headbanger, promote the general Mosh Pit, and secure the Blessings of Sex, Drugs, and Rock N' Roll to ourselves and our Posterity, do ordain and establish this Music for the United States of America.\"\n\nEST. SEP 2015\n",
     "music_link": "View all →",
     "visuals_link": "Browse visuals →"
   },
@@ -23,11 +23,7 @@
   },
   "contact": {
     "heading": "CONTACT",
-    "message": "Music and social links can be added here when they're ready.",
-    "email": "",
-    "instagram": "",
-    "youtube": "",
-    "bandcamp": ""
+    "message": "Music and social links can be added here when they're ready."
   },
   "seo": {
     "home": {
