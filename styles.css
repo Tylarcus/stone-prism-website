@@ -464,3 +464,25 @@ body.sp-audio-open .site{padding-bottom:152px}
  .sp-jukebox-time{min-width:70px;font-size:.68rem}
 }
 @media(prefers-reduced-motion:reduce){.sp-jukebox-spectrum span{transition:none}}
+
+
+/* Player V3.2 — restore the original STATIC, multicolored waveform.
+   The MP3 is played natively; these bars are tiny precomputed peak data. */
+.sp-jukebox-lower{display:flex;align-items:center;min-height:64px;gap:12px;margin-top:3px}
+.sp-jukebox-timeline{display:flex;align-items:center;flex:1;min-width:0;height:58px}
+.sp-jukebox-static-wave{width:100%;height:58px;position:relative;overflow:hidden;flex:1;min-width:0}
+.sp-jukebox-static-wave[hidden]{display:none!important}
+.sp-jukebox-static-wave canvas{position:absolute;top:0;left:0;display:block;pointer-events:none}
+.sp-jukebox-static-wave .sp-waveform-played{clip-path:inset(0 100% 0 0)}
+.sp-waveform-seek{position:absolute;inset:0;z-index:1;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;touch-action:pan-y}
+.sp-waveform-seek:focus-visible{opacity:1;outline:2px solid #bfdc5b;outline-offset:-2px}
+.sp-jukebox-time{flex:0 0 90px;min-width:0;font-size:.72rem;align-self:center;text-align:right;color:#ddcfc2}
+.sp-jukebox-seek[hidden]{display:none!important}
+.sp-jukebox-seek{width:100%;height:24px;min-width:0;accent-color:#bed754}
+@media(max-width:700px){
+ body.sp-audio-open .site{padding-bottom:158px}
+ .sp-jukebox-lower{display:flex;gap:8px;min-height:62px}
+ .sp-jukebox-timeline,.sp-jukebox-static-wave{height:58px}
+ .sp-jukebox-time{flex-basis:72px;min-width:0;font-size:.65rem}
+}
+@media(prefers-reduced-motion:reduce){.sp-jukebox-static-wave canvas{transition:none}}
