@@ -76,7 +76,7 @@ assert.equal(homeVisuals.dataset.homeColumns,'3','Home visuals phone default');
 win.innerWidth=830;
 listeners.resize.forEach(fn=>fn());
 assert.equal(homeMusic.dataset.homeColumns,'3','Home music tablet default');
-assert.equal(homeVisuals.dataset.homeColumns,'4','Home visuals tablet default');
+assert.equal(homeVisuals.dataset.homeColumns,'3','Only three featured visuals fill the tablet row despite four-column default');
 win.innerWidth=1200;
 listeners.resize.forEach(fn=>fn());
 assert.equal(homeMusic.dataset.homeColumns,'3','Three featured music items must fill width despite four-column CMS setting');
