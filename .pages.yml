@@ -8,6 +8,137 @@ media:
     categories: [image]
     rename: safe
 content:
+  - name: website_text
+    label: Website Text & Settings
+    type: file
+    path: content/site-text.json
+    format: json
+    fields:
+      - name: home
+        label: Homepage
+        type: object
+        fields:
+          - name: tagline
+            label: Text under Stone Prism logo
+            type: text
+          - name: about
+            label: About paragraph
+            type: text
+          - name: music_link
+            label: Music section link label
+            type: string
+          - name: visuals_link
+            label: Visual archive link label
+            type: string
+      - name: music
+        label: Music page
+        type: object
+        fields:
+          - name: intro
+            label: Description under Music title
+            type: text
+          - name: library_label
+            label: Music library small heading
+            type: string
+          - name: library_heading
+            label: Music library heading
+            type: string
+          - name: archive_heading
+            label: Archive artwork heading
+            type: string
+          - name: empty_all
+            label: No recordings message
+            type: text
+          - name: empty_official
+            label: No official releases message
+            type: text
+          - name: empty_demo
+            label: No demos message
+            type: text
+      - name: visuals
+        label: Visual Archive page
+        type: object
+        fields:
+          - name: intro
+            label: Description under Visual Archive title
+            type: text
+          - name: description
+            label: Archive introduction paragraph
+            type: text
+      - name: recording
+        label: Individual recording page
+        type: object
+        fields:
+          - name: intro
+            label: Description under recording page title
+            type: text
+      - name: contact
+        label: Footer & contact links (all pages)
+        type: object
+        fields:
+          - name: heading
+            label: Footer heading
+            type: string
+          - name: message
+            label: Footer contact text
+            type: text
+          - name: email
+            label: Public email address (optional)
+            type: string
+            description: Leave blank to hide; any address entered is public.
+          - name: instagram
+            label: Instagram URL (optional)
+            type: string
+          - name: youtube
+            label: YouTube URL (optional)
+            type: string
+          - name: bandcamp
+            label: Bandcamp URL (optional)
+            type: string
+      - name: seo
+        label: Browser titles & search descriptions
+        type: object
+        fields:
+          - name: home
+            label: Homepage SEO
+            type: object
+            fields:
+              - name: title
+                label: Browser title
+                type: string
+              - name: description
+                label: Search description
+                type: text
+          - name: music
+            label: Music page SEO
+            type: object
+            fields:
+              - name: title
+                label: Browser title
+                type: string
+              - name: description
+                label: Search description
+                type: text
+          - name: visuals
+            label: Visual archive SEO
+            type: object
+            fields:
+              - name: title
+                label: Browser title
+                type: string
+              - name: description
+                label: Search description
+                type: text
+          - name: recording
+            label: Recording page SEO
+            type: object
+            fields:
+              - name: title
+                label: Browser title
+                type: string
+              - name: description
+                label: Search description
+                type: text
   - name: recordings
     label: Music / Official releases & demos
     type: collection

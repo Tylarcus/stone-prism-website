@@ -45,7 +45,9 @@ const visuals=loadCollection('visuals').filter(x=>x.published===true&&normalizeP
  featured_home:!!x.featured_home
 })).sort((a,b)=>a.order-b.order||a.title.localeCompare(b.title));
 for(const v of visuals){if(!ids.has(v.category)){ids.add(v.category);visualCategories.push({id:v.category,label:v.category.replace(/-/g,' ')})}}
-const content={version:'2.3',recordings,visuals,visualCategories};
+// Single-file Pages CMS editor for all general site copy and search metadata.
+const siteText=JSON.parse(fs.readFileSync(join('content/site-text.json'),'utf8'));
+const content={version:'2.3',recordings,visuals,visualCategories,siteText};
 fs.mkdirSync(join('data'),{recursive:true});
 const json=JSON.stringify(content).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
 fs.writeFileSync(join('data/site-content.js'),`/* Built from CMS content. Do not hand-edit. */\nwindow.STONE_PRISM_CONTENT=${json};\n`);

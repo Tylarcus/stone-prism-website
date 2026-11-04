@@ -1,0 +1,50 @@
+{
+  "home": {
+    "tagline": "Songs, visuals, archives, and noise from Stone Prism.",
+    "about": "Stone Prism is a noise-leaning rock project built on distorted songs, collage visuals, and a fascination with decay, nature, and the in-between. DIY in spirit, rooted in texture, and always a little off-center.",
+    "music_link": "View all →",
+    "visuals_link": "Browse visuals →"
+  },
+  "music": {
+    "intro": "Recordings, artwork, and experiments from Stone Prism.",
+    "library_label": "THE STONE PRISM MUSIC LIBRARY",
+    "library_heading": "The Recording Vault",
+    "archive_heading": "Archive artwork",
+    "empty_all": "No recordings have been published yet. The original artwork remains below.",
+    "empty_official": "No official releases have been published here yet.",
+    "empty_demo": "No website-exclusive demos are published yet."
+  },
+  "visuals": {
+    "intro": "The images, artifacts, and mischief behind the music.",
+    "description": "Artwork, illustrations, old flyers, and instruments that have helped shape Stone Prism's visual identity. Filter the archive or open any image for a closer look."
+  },
+  "recording": {
+    "intro": "Recordings, demos, and the stories behind the noise."
+  },
+  "contact": {
+    "heading": "CONTACT",
+    "message": "Music and social links can be added here when they're ready.",
+    "email": "",
+    "instagram": "",
+    "youtube": "",
+    "bandcamp": ""
+  },
+  "seo": {
+    "home": {
+      "title": "Stone Prism | Music & Visuals",
+      "description": "Stone Prism — music, visual experiments, and a collection of noise and artwork."
+    },
+    "music": {
+      "title": "Music / Releases | Stone Prism",
+      "description": "Stone Prism music and releases archive"
+    },
+    "visuals": {
+      "title": "Visual Archive | Stone Prism",
+      "description": "Stone Prism visual archive, flyers and photography"
+    },
+    "recording": {
+      "title": "Recording | Stone Prism",
+      "description": "Stone Prism official releases and website-exclusive demos. Stream on site."
+    }
+  }
+}
