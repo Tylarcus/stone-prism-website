@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT = ROOT / "content" / "recordings"
@@ -42,9 +43,48 @@ def envelope(pcm, count=PEAK_COUNT):
     return result
 
 
-def decode(url):
+def ffmpeg_executable():
+    command = shutil.which("ffmpeg")
+    if command:
+        return command
+    # Linux GitHub runners do not always ship FFmpeg. A pinned self-contained
+    # wheel avoids a full apt-get update on every CMS or layout edit.
+    sys.path.insert(0, str(ROOT / ".wave-tools"))
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except (ImportError, RuntimeError, OSError):
+        return None
+
+
+def recover_previous(slug, track_index, source):
+    """Preserve last published waveform during a tool/network outage."""
+    target = OUTPUT / f"{slug}-{track_index}.json"
+    if target.exists():
+        try:
+            prev = json.loads(target.read_text(encoding="utf-8"))
+            if prev.get("source") == source and len(prev.get("peaks", [])) >= 20:
+                return True
+        except (OSError, ValueError, TypeError):
+            pass
+    try:
+        public_url = f"https://stoneprism.music/data/waveforms/{slug}-{track_index}.json"
+        with urlopen(Request(public_url, headers={"User-Agent": "StonePrismWaveforms/1.0"}), timeout=6) as f:
+            if f.status != 200:
+                return False
+            payload = json.loads(f.read(100000).decode("utf-8"))
+        if payload.get("source") == source and isinstance(payload.get("peaks"), list) and len(payload["peaks"]) >= 20:
+            target.write_text(json.dumps(payload, separators=(",", ":")) + "\n", encoding="utf-8")
+            print(f"WAVEFORMS: reused last published peaks for {slug}-{track_index}.")
+            return True
+    except (OSError, ValueError, TypeError):
+        pass
+    return False
+
+
+def decode(url, executable):
     args = [
-        "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+        executable, "-nostdin", "-hide_banner", "-loglevel", "error",
         "-user_agent", "StonePrismWaveforms/1.0",
         "-i", url,
         "-map", "0:a:0", "-vn", "-t", str(MAX_SECONDS),
@@ -60,9 +100,9 @@ def decode(url):
 
 def build():
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    if not shutil.which("ffmpeg"):
-        print("WAVEFORMS: ffmpeg missing; native seeking will remain available.")
-        return
+    executable = ffmpeg_executable()
+    if not executable:
+        print("WAVEFORMS: binary unavailable; preserving previously published peaks where possible.")
     count = 0
     for file in sorted(CONTENT.glob("*.json")):
         record = json.loads(file.read_text(encoding="utf-8"))
@@ -76,7 +116,11 @@ def build():
             if not allowed_source(source):
                 continue
             try:
-                samples = decode(source)
+                if not executable:
+                    if recover_previous(slug, i, source):
+                        count += 1
+                    continue
+                samples = decode(source, executable)
                 if not samples:
                     raise ValueError("Decoded audio contained no samples")
                 payload = {
@@ -91,6 +135,8 @@ def build():
             except (subprocess.SubprocessError, OSError, ValueError) as exc:
                 # A temporary audio-host failure must not block the website publish.
                 print(f"WAVEFORMS: unable to generate {slug} track {i}: {str(exc)[:250]}")
+                if recover_previous(slug, i, source):
+                    count += 1
     print(f"WAVEFORMS: generated {count} file(s).")
 
 
