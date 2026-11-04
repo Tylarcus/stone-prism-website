@@ -1,10 +1,9 @@
 {
-  "title": "Angel flower",
+  "title": "Demo Album Artwork",
   "slug": "angel-flower",
   "description": "Pink flower artwork; a screenshot-source copy",
   "image": "assets/angel.webp",
   "category": "collage",
-  "order": 60,
   "published": true,
-  "featured_home": false
+  "order": 60
 }
