@@ -29,9 +29,13 @@ jobs:
           node --check script.js
           node --check player-v3.js
           node --check tools/test-ui-v35.mjs
+          node --check tools/test-layout-ui.mjs
+          node --check tools/test-cms-inheritance.mjs
           node --check tools/build.mjs
           node tools/test-music.mjs
           node tools/test-ui-v35.mjs
+          node tools/test-layout-ui.mjs
+          node tools/test-cms-inheritance.mjs
           node tools/test-player-v3.mjs
           python3 tools/test_waveforms.py
       - name: Check FFmpeg (avoid slow package updates)
