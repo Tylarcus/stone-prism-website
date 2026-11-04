@@ -1,10 +1,9 @@
 {
-  "title": "Customized guitar",
+  "title": "2005 Gibson SG",
   "slug": "customized-guitar",
-  "description": "The Stone Prism guitar",
+  "description": "The Stone Prism guitar, customized with VHII Bareknuckle pickups, ratio'd tuners, an all brass Khaler Tremolo, and a custom tape job.  The copper wire is because I forgot to ground the strings, and yes, that's the pick of destiny.",
   "image": "assets/guitar.webp",
   "category": "gear",
-  "order": 50,
   "published": true,
-  "featured_home": true
+  "order": 50
 }
