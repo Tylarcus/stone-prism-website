@@ -328,3 +328,56 @@
     font-size:clamp(.53rem,1.55vw,.61rem);line-height:1.35;
   }
 }
+
+
+/* Stone Prism Player V2 — themed, responsive waveform + YouTube media. */
+.sp-player{position:relative;overflow:hidden;background:linear-gradient(135deg,#251d26 0%,#171116 52%,#221717 100%);border:1px solid #887168;border-left:3px solid #bddb52;padding:20px;box-shadow:inset 0 1px 0 #c19f6133}
+.sp-player::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,#b9e849 0%,#e4a34a 35%,#d76054 68%,#9d78ba 100%);opacity:.84}
+.sp-player-header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:0 0 12px}
+.sp-player .player-now{margin:0;color:#f1e7d6;font-weight:850;font-size:clamp(.86rem,2vw,1.06rem);letter-spacing:.07em;overflow-wrap:anywhere}
+.sp-player-badge{font-size:.58rem;letter-spacing:.16em;color:#c5b4a5;white-space:nowrap}
+.sp-controls{display:flex;align-items:center;gap:14px;min-width:0}
+.sp-player .player-play{background:#c7de54;min-width:74px;border-radius:2px;box-shadow:2px 2px 0 #0e0d0f;font-weight:900;transition:background .15s}
+.sp-player .player-play:hover,.sp-player .player-play:focus-visible{background:#e5ac54;color:#161015}
+.player-meter{display:flex;gap:2px;align-items:center;height:30px;width:29px;flex:0 0 29px}
+.player-meter span{display:block;width:4px;height:6px;background:#b5d84a;border-radius:1px;opacity:.6;transform-origin:50% 50%}
+.player-meter span:nth-child(2){background:#e4a34a;height:11px}
+.player-meter span:nth-child(3){background:#dc6759;height:18px}
+.player-meter span:nth-child(4){background:#a978be;height:10px}
+.player-meter span:nth-child(5){background:#c6e55b;height:7px}
+.player-meter.is-playing span{opacity:1;animation:stone-prism-meter .65s ease-in-out infinite alternate}
+.player-meter.is-playing span:nth-child(2){animation-duration:.41s;animation-delay:.1s}
+.player-meter.is-playing span:nth-child(3){animation-duration:.52s;animation-delay:.22s}
+.player-meter.is-playing span:nth-child(4){animation-duration:.73s;animation-delay:.14s}
+.player-meter.is-playing span:nth-child(5){animation-duration:.48s;animation-delay:.3s}
+@keyframes stone-prism-meter{from{transform:scaleY(.45)}to{transform:scaleY(1.65)}}
+.sp-timeline{flex:1;min-width:0;position:relative}
+.player-wave{width:100%;min-width:0;cursor:pointer}
+.sp-timeline .player-seek{display:block;width:100%;accent-color:#bddb52}
+.sp-timeline .player-seek[hidden],.player-wave[hidden]{display:none!important}
+.sp-player .player-time{flex:0 0 auto;min-width:92px;font-size:.75rem;letter-spacing:.01em}
+.sp-player .player-message{margin-top:13px;font-size:.76rem;color:#c8bcb0;line-height:1.5}
+.sp-track-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:0 0 auto}
+.track-watch,.sp-video-close,.sp-youtube-link{display:inline-block;border:1px solid #a886ab;color:#eddfef;background:#2e2031;padding:8px 12px;text-decoration:none;cursor:pointer;font:inherit;font-size:.78rem;line-height:1.25;white-space:nowrap}
+.track-watch:hover,.track-watch:focus-visible,.sp-video-close:hover,.sp-youtube-link:hover{background:#6d3d5e;color:#fff}
+.sp-track-soon{color:#9b8a7d;font-size:.75rem;white-space:nowrap}
+.sp-video-panel{margin-top:22px;padding:16px;border:1px solid #856579;background:#171219}
+.sp-video-panel[hidden]{display:none}
+.sp-video-heading{margin:0 0 12px;color:#e9dbcb;font-size:.85rem;font-weight:800;letter-spacing:.08em}
+.sp-video-embed{position:relative;width:100%;aspect-ratio:16/9;background:#0a080a}
+.sp-video-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.sp-video-footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:12px}
+.sp-youtube-link{border-color:#c26950;background:#3a221e;color:#f0dbd2}
+@media(max-width:680px){
+ .sp-player{padding:15px 12px}
+ .sp-player-header{display:block}
+ .sp-player-badge{display:block;margin-top:5px}
+ .sp-controls{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+ .player-meter{display:none}
+ .sp-timeline{grid-column:1 / -1;grid-row:2;width:100%}
+ .sp-player .player-time{grid-column:3;grid-row:1}
+ .sp-video-panel{padding:10px}
+ .sp-track-actions{gap:6px}
+ .track-play,.track-watch{min-width:0;padding:8px 10px}
+}
+@media(prefers-reduced-motion:reduce){.player-meter.is-playing span{animation:none}.sp-player .player-play{transition:none}}

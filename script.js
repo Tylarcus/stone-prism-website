@@ -3,7 +3,7 @@
 'use strict';
 const data=window.STONE_PRISM_CONTENT||{recordings:[],visuals:[],visualCategories:[]};
 let activeFilter='all', visualFilter='all';
-let audio=null, playingSlug='',playingTrack=-1;
+let audio=null, waveInstance=null, playingSlug='',playingTrack=-1;
 const $=sel=>document.querySelector(sel);
 const el=(name,classes,text)=>{const node=document.createElement(name);if(classes)node.className=classes;if(text!==undefined)node.textContent=String(text);return node};
 const attr=(node,props)=>{for(const [k,v] of Object.entries(props))node.setAttribute(k,String(v));return node};
@@ -128,44 +128,177 @@ function initMusic(){
  }
  buttons.forEach(b=>b.onclick=()=>{activeFilter=b.dataset.musicFilter;render()});render();
 }
-function formatTime(s){if(!Number.isFinite(s))return '0:00';return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`}
-function stopAudio(){if(audio){audio.pause();audio.removeAttribute('src');audio.load();audio=null}playingTrack=-1;playingSlug=''}
+function formatTime(s){return Number.isFinite(s)&&s>=0?Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'):'0:00'}
+function youtubeVideoId(raw){
+ if(typeof raw!=='string')return '';
+ try{
+  const u=new URL(raw);if(u.protocol!=='https:')return '';
+  const host=u.hostname.toLowerCase();let id='';
+  if(host==='youtu.be'||host==='www.youtu.be')id=u.pathname.split('/')[1]||'';
+  else if(['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','youtube-nocookie.com','www.youtube-nocookie.com'].includes(host)){
+   if(u.pathname==='/watch')id=u.searchParams.get('v')||'';
+   else {const m=u.pathname.match(/^\/(?:embed|shorts|live)\/([^/]+)/);id=m?m[1]:''}
+  }
+  return /^[A-Za-z0-9_-]{11}$/.test(id)?id:'';
+ }catch(_){return ''}
+}
+const audioSource=t=>t&&url(t.audio_url)&&!youtubeVideoId(t.audio_url)?url(t.audio_url):'';
+let waveformLibrary=null;
+function loadWaveform(){
+ if(window.WaveSurfer)return Promise.resolve(window.WaveSurfer);
+ if(!waveformLibrary)waveformLibrary=new Promise((resolve,reject)=>{
+  const script=el('script');script.async=true;
+  script.src='https://cdn.jsdelivr.net/npm/wavesurfer.js@7.12.12/dist/wavesurfer.min.js';
+  script.onload=()=>window.WaveSurfer?resolve(window.WaveSurfer):reject(new Error('Waveform library unavailable'));
+  script.onerror=()=>reject(new Error('Waveform library could not load'));
+  document.head.append(script);
+ });
+ return waveformLibrary;
+}
+function stopAudio(){
+ if(waveInstance){const old=waveInstance;waveInstance=null;try{old.destroy()}catch(_){}}
+ if(audio){const old=audio;audio=null;old.pause();old.removeAttribute('src');old.load()}
+ playingTrack=-1;playingSlug='';
+}
 function createDetail(rec){
  const root=$('#recordingDetail');root.replaceChildren();
- const coverBox=el('div','detail-cover');if(url(rec.artwork)){const im=el('img');attr(im,{src:url(rec.artwork),alt:`${rec.title} cover artwork`});coverBox.append(im)}else coverBox.append(el('div','recording-cover-placeholder','SP'));
+ const coverBox=el('div','detail-cover');
+ if(url(rec.artwork)){const img=el('img');attr(img,{src:url(rec.artwork),alt:rec.title+' cover artwork'});coverBox.append(img)}
+ else coverBox.append(el('div','recording-cover-placeholder','SP'));
  const content=el('div','detail-info');content.append(el('p','detail-type',prettyType(rec)),el('h2','detail-title',rec.title));
  if(rec.date)content.append(el('p','detail-type',rec.date));
  if(rec.description)content.append(el('p','detail-notes',rec.description));
- const list=el('ol','track-list');const tracks=rec.tracks||[];
+ const tracks=Array.isArray(rec.tracks)?rec.tracks:[];
+ const list=el('ol','track-list');
  if(!tracks.length)content.append(el('p','library-empty','Tracks will appear when this recording is ready.'));
- const player=el('section','stream-player');player.id='streamPlayer';player.hidden=true;
- const now=el('p','player-now','');now.id='playerNow';
- const controls=el('div','player-controls'),play=el('button','player-play','Pause');play.type='button';play.id='playerPlay';play.setAttribute('aria-label','Play or pause track');
- const seek=el('input','player-seek');seek.type='range';seek.min='0';seek.max='1000';seek.value='0';seek.id='playerSeek';seek.setAttribute('aria-label','Seek in track');
- const time=el('span','player-time','0:00 / 0:00');time.id='playerTime';
- const message=el('p','player-message','Now playing on Stone Prism.');message.id='playerMessage';
- controls.append(play,seek,time);player.append(now,controls,message);
- function update(){if(!audio)return;const current=audio.currentTime||0,total=Number.isFinite(audio.duration)?audio.duration:0;
-  seek.value=total?String(Math.round(current/total*1000)):'0';time.textContent=`${formatTime(current)} / ${formatTime(total)}`;play.textContent=audio.paused?'Play':'Pause'}
- function selectTrack(index){const t=tracks[index];if(!t||!url(t.audio_url))return;
-  stopAudio();audio=new Audio();audio.preload='none';audio.src=t.audio_url;
-  playingSlug=rec.slug;playingTrack=index;now.textContent=t.title;player.hidden=false;message.textContent='Now playing on Stone Prism.';
-  audio.addEventListener('timeupdate',update);audio.addEventListener('loadedmetadata',update);
-  audio.addEventListener('pause',update);audio.addEventListener('play',update);
-  audio.addEventListener('ended',()=>{const next=tracks.findIndex((u,i)=>i>index&&url(u.audio_url));if(next!==-1)selectTrack(next);else update()});
-  audio.addEventListener('error',()=>{message.textContent='Audio could not load. Check the streaming URL.';update()});
-  audio.play().catch(()=>{message.textContent='Press Play to start the stream.';update()});update();
-  list.querySelectorAll('.track-play').forEach((b,i)=>{b.textContent=i===index?'Playing':'Play';b.setAttribute('aria-current',String(i===index))});
+
+ const player=el('section','stream-player sp-player');player.id='streamPlayer';player.hidden=true;
+ player.setAttribute('aria-label','Stone Prism audio player');
+ const now=el('p','player-now',''),badge=el('span','sp-player-badge','STONE PRISM / AUDIO');
+ const header=el('div','sp-player-header');header.append(now,badge);
+ const controls=el('div','player-controls sp-controls');
+ const play=el('button','player-play','Play');play.type='button';play.setAttribute('aria-label','Play or pause recording');
+ const meter=el('div','player-meter');meter.setAttribute('aria-hidden','true');
+ for(let n=0;n<5;n++)meter.append(el('span'));
+ const wave=el('div','player-wave');wave.hidden=true;wave.setAttribute('aria-label','Seekable audio waveform');
+ const seek=el('input','player-seek');seek.type='range';seek.min='0';seek.max='1000';seek.value='0';
+ seek.hidden=true;seek.setAttribute('aria-label','Seek within the track');
+ const timeline=el('div','sp-timeline');timeline.append(wave,seek);
+ const time=el('span','player-time','0:00 / 0:00');
+ const message=el('p','player-message','');message.setAttribute('role','status');
+ controls.append(play,meter,timeline,time);player.append(header,controls,message);
+
+ const video=el('section','sp-video-panel');video.hidden=true;
+ const videoTitle=el('p','sp-video-heading','WATCH / STONE PRISM');
+ const videoScreen=el('div','sp-video-embed');
+ const videoFooter=el('div','sp-video-footer'),closeVideo=el('button','sp-video-close','Close video');
+ closeVideo.type='button';videoFooter.append(closeVideo);
+ video.append(videoTitle,videoScreen,videoFooter);
+ const clearVideo=()=>{videoScreen.replaceChildren();video.hidden=true};
+ closeVideo.onclick=clearVideo;
+ let token=0,ready=false;
+ function update(){
+  const active=waveInstance?waveInstance.isPlaying():!!audio&&!audio.paused;
+  const current=waveInstance?waveInstance.getCurrentTime():audio?audio.currentTime||0:0;
+  const total=waveInstance?waveInstance.getDuration():audio&&Number.isFinite(audio.duration)?audio.duration:0;
+  play.textContent=active?'Pause':'Play';meter.classList.toggle('is-playing',active);
+  time.textContent=formatTime(current)+' / '+formatTime(total);
+  if(!waveInstance)seek.value=total?String(Math.round(current/total*1000)):'0';
+  list.querySelectorAll('.track-play').forEach(b=>{
+   const selected=playingSlug===rec.slug&&b.dataset.trackIndex===String(playingTrack);
+   b.textContent=selected&&active?'Playing':'Play';b.setAttribute('aria-current',selected?'true':'false');
+  });
+ }
+ function advance(){
+  const next=tracks.findIndex((t,i)=>i>playingTrack&&audioSource(t));
+  if(next>=0)selectTrack(next);else {message.textContent='Playback finished.';update()}
+ }
+ function nativeFallback(source,selectToken,reason){
+  if(selectToken!==token)return;
+  if(waveInstance){const old=waveInstance;waveInstance=null;try{old.destroy()}catch(_){}}
+  wave.hidden=true;wave.replaceChildren();seek.hidden=false;ready=false;
+  audio=new Audio();audio.preload='metadata';audio.src=source;
+  const current=audio;
+  ['timeupdate','loadedmetadata','play','pause'].forEach(event=>current.addEventListener(event,()=>{if(audio===current)update()}));
+  current.addEventListener('ended',()=>{if(audio===current)advance()});
+  current.addEventListener('error',()=>{if(audio===current)message.textContent='Audio could not load. Check the full R2 object URL and file type.'});
+  message.textContent=reason||'Streaming on Stone Prism.';
+  current.play().catch(()=>{if(audio===current)message.textContent='Tap Play to start this recording.'});
+  update();
+ }
+ function selectTrack(index){
+  const t=tracks[index],source=audioSource(t);if(!source)return;
+  const selectToken=++token;clearVideo();stopAudio();playingSlug=rec.slug;playingTrack=index;ready=false;
+  now.textContent=t.title;player.hidden=false;wave.hidden=true;seek.hidden=true;
+  wave.replaceChildren();time.textContent='0:00 / 0:00';message.textContent='Loading your recording…';update();
+  loadWaveform().then(WaveSurfer=>{
+   if(selectToken!==token)return;
+   try{
+    const ctx=el('canvas').getContext('2d');let progress='#b9e849';
+    if(ctx){
+     const gradient=ctx.createLinearGradient(0,0,480,0);
+     gradient.addColorStop(0,'#b9e849');gradient.addColorStop(.32,'#e4a34a');
+     gradient.addColorStop(.64,'#d76054');gradient.addColorStop(1,'#a078be');
+     progress=gradient;
+    }
+    wave.hidden=false;seek.hidden=true;
+    const instance=WaveSurfer.create({container:wave,url:source,
+     waveColor:'#766579',progressColor:progress,cursorColor:'#f2e7d5',cursorWidth:1,
+     height:66,barWidth:2,barGap:2,barRadius:2,normalize:true,interact:true});
+    waveInstance=instance;
+    instance.on('ready',()=>{
+     if(waveInstance!==instance||selectToken!==token)return;
+     ready=true;message.textContent='Streaming on Stone Prism.';update();
+     instance.play().catch(()=>{if(waveInstance===instance)message.textContent='Tap Play to start this recording.'});
+    });
+    ['timeupdate','play','pause'].forEach(event=>instance.on(event,()=>{if(waveInstance===instance)update()}));
+    instance.on('finish',()=>{if(waveInstance===instance)advance()});
+    instance.on('error',()=>{
+     if(waveInstance===instance&&selectToken===token)nativeFallback(source,selectToken,'Waveform unavailable; using backup playback. R2 may need CORS configured.');
+    });
+   }catch(_){nativeFallback(source,selectToken,'Waveform unavailable; using backup playback.')}
+  }).catch(()=>nativeFallback(source,selectToken,'Waveform library unavailable; using backup playback.'));
+ }
+ function showVideo(index){
+  const track=tracks[index],id=track&&youtubeVideoId(track.youtube_url||track.audio_url);
+  if(!id)return;
+  ++token;stopAudio();player.hidden=true;clearVideo();
+  const frame=el('iframe');frame.title=track.title+' on YouTube';
+  frame.src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&playsinline=1';
+  frame.allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture';
+  frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';
+  const external=el('a','sp-youtube-link','Open on YouTube ↗');
+  external.href='https://www.youtube.com/watch?v='+id;external.target='_blank';external.rel='noopener noreferrer';
+  videoTitle.textContent=track.title+' / WATCH VIDEO';
+  videoScreen.append(frame);videoFooter.replaceChildren(closeVideo,external);video.hidden=false;update();
  }
  tracks.forEach((t,i)=>{
-  const li=el('li','track-row');const label=el('div','track-label');label.append(el('span','track-number',String(i+1).padStart(2,'0')));
-  const name=el('div');name.append(el('span','track-name',t.title));if(t.notes)name.append(el('span','track-note',t.notes));label.append(name);
-  const button=el('button','track-play',url(t.audio_url)?'Play':'Soon');button.type='button';button.disabled=!url(t.audio_url);
-  button.addEventListener('click',()=>selectTrack(i));li.append(label,button);list.append(li)
- });content.append(list,player);
- root.append(coverBox,content);
- play.onclick=()=>{if(!audio)return;if(audio.paused)audio.play().catch(()=>{message.textContent='Unable to play audio. Check its URL.'});else audio.pause()};
- seek.oninput=()=>{if(audio&&Number.isFinite(audio.duration))audio.currentTime=Number(seek.value)/1000*audio.duration};
+  const row=el('li','track-row'),label=el('div','track-label');
+  label.append(el('span','track-number',String(i+1).padStart(2,'0')));
+  const name=el('div');name.append(el('span','track-name',t.title));
+  if(t.notes)name.append(el('span','track-note',t.notes));
+  label.append(name);
+  const actions=el('div','sp-track-actions');
+  if(audioSource(t)){
+   const button=el('button','track-play','Play');button.type='button';button.dataset.trackIndex=String(i);
+   button.addEventListener('click',()=>selectTrack(i));actions.append(button);
+  }
+  if(youtubeVideoId(t.youtube_url||t.audio_url)){
+   const button=el('button','track-watch','Watch');button.type='button';
+   button.addEventListener('click',()=>showVideo(i));actions.append(button);
+  }
+  if(!actions.childElementCount)actions.append(el('span','sp-track-soon','Coming soon'));
+  row.append(label,actions);list.append(row);
+ });
+ content.append(list,player,video);root.append(coverBox,content);
+ play.addEventListener('click',()=>{
+  if(waveInstance){
+   if(!ready){message.textContent='Waveform is loading.';return}
+   waveInstance.playPause();return;
+  }
+  if(audio){if(audio.paused)audio.play().catch(()=>{message.textContent='Unable to play audio.'});else audio.pause()}
+ });
+ seek.addEventListener('input',()=>{if(audio&&Number.isFinite(audio.duration))audio.currentTime=Number(seek.value)/1000*audio.duration});
 }
 function initRecording(){
  const root=$('#recordingDetail');if(!root)return;stopAudio();

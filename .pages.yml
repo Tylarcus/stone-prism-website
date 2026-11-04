@@ -229,9 +229,13 @@ content:
             type: string
             required: true
           - name: audio_url
-            label: Streaming audio URL (HTTPS preferred)
+            label: Direct audio file URL (MP3 / R2)
             type: string
-            description: Paste a hosted audio URL; do not add a download link.
+            description: Paste the entire public URL of a playable audio FILE, such as https://pub-xxxx.r2.dev/Angel.mp3. The bucket root and YouTube links do not work here.
+          - name: youtube_url
+            label: YouTube video URL (optional)
+            type: string
+            description: Paste a regular YouTube video or Shorts URL; leave blank for website-only demos. Use both fields if you want audio and video.
           - name: notes
             label: Track notes
             type: text

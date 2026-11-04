@@ -20,6 +20,25 @@ function normalizePath(input){
  if(/^\/(assets|media|audio)\//i.test(value))return value.slice(1);
  return validUrl(value)?value:'';
 }
+// Only actual YouTube video IDs become embedded videos; no arbitrary HTML/URLs.
+function youtubeVideoId(input){
+ if(typeof input!=='string'||!input.trim())return '';
+ try{
+  const u=new URL(input.trim());
+  if(u.protocol!=='https:')return '';
+  const host=u.hostname.toLowerCase();let id='';
+  if(host==='youtu.be'||host==='www.youtu.be')id=u.pathname.split('/')[1]||'';
+  else if(['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','youtube-nocookie.com','www.youtube-nocookie.com'].includes(host)){
+   if(u.pathname==='/watch')id=u.searchParams.get('v')||'';
+   else {const found=u.pathname.match(/^\/(?:embed|shorts|live)\/([^/]+)/);id=found?found[1]:''}
+  }
+  return /^[A-Za-z0-9_-]{11}$/.test(id)?id:'';
+ }catch(_){return ''}
+}
+const normalizedYouTube=input=>{
+ const id=youtubeVideoId(input);
+ return id?'https://www.youtube.com/watch?v='+id:'';
+};
 const recordings=[],seen=new Set();
 for(const item of loadCollection('recordings')){
  if(item.status!=='published')continue;
@@ -28,9 +47,16 @@ for(const item of loadCollection('recordings')){
  seen.add(item.slug);
  if(!['official','demo'].includes(item.kind))throw Error(`Invalid recording category ${item._source}`);
  const tracks=Array.isArray(item.tracks)?item.tracks:[];
- const filteredTracks=tracks.filter(t=>t&&typeof t.title==='string').map((t,i)=>({
-   title:t.title.trim().slice(0,200),notes:String(t.notes||'').slice(0,1500),audio_url:normalizePath(t.audio_url),number:i+1
- }));
+ const filteredTracks=tracks.filter(t=>t&&typeof t.title==='string').map((t,i)=>{
+   const audio=normalizePath(t.audio_url);
+   return {
+    title:t.title.trim().slice(0,200),notes:String(t.notes||'').slice(0,1500),
+    // Migrate old CMS data safely: a YouTube link in audio_url is a video, never an audio source.
+    audio_url:youtubeVideoId(audio)?'':audio,
+    youtube_url:normalizedYouTube(t.youtube_url)||normalizedYouTube(t.audio_url),
+    number:i+1
+   };
+  });
  recordings.push({slug:item.slug,title:String(item.title||'').trim().slice(0,200),kind:item.kind,
   release_type:String(item.release_type||'demo').slice(0,60),date:String(item.date||'').slice(0,30),
   description:String(item.description||'').slice(0,5000),artwork:normalizePath(item.artwork),
@@ -47,7 +73,7 @@ const visuals=loadCollection('visuals').filter(x=>x.published===true&&normalizeP
 for(const v of visuals){if(!ids.has(v.category)){ids.add(v.category);visualCategories.push({id:v.category,label:v.category.replace(/-/g,' ')})}}
 // Single-file Pages CMS editor for all general site copy and search metadata.
 const siteText=JSON.parse(fs.readFileSync(join('content/site-text.json'),'utf8'));
-const content={version:'2.3',recordings,visuals,visualCategories,siteText};
+const content={version:'2.6',recordings,visuals,visualCategories,siteText};
 fs.mkdirSync(join('data'),{recursive:true});
 const json=JSON.stringify(content).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
 fs.writeFileSync(join('data/site-content.js'),`/* Built from CMS content. Do not hand-edit. */\nwindow.STONE_PRISM_CONTENT=${json};\n`);

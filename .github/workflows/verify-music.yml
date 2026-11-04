@@ -1,0 +1,25 @@
+name: Stone Prism — verify music player
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check script.js
+          node --check tools/build.mjs
+          node --check tools/test-music.mjs
+      - name: Build published content
+        run: node tools/build.mjs
+      - name: Test audio and video separation
+        run: node tools/test-music.mjs

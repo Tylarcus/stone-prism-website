@@ -24,6 +24,11 @@ jobs:
           node-version: '22'
       - name: Generate published content
         run: node tools/build.mjs
+      - name: Verify media fields and player
+        run: |
+          node --check script.js
+          node --check tools/build.mjs
+          node tools/test-music.mjs
       - name: Stage only public website files
         run: |
           mkdir -p _site

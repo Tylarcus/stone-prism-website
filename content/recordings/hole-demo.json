@@ -11,8 +11,9 @@
   "tracks": [
     {
       "title": "I need you",
-      "audio_url": "https://youtu.be/zvHoJMJKBbY?si=QuopOXbaWh_QW-oj",
-      "notes": "Test"
+      "audio_url": "",
+      "notes": "Test",
+      "youtube_url": "https://youtu.be/zvHoJMJKBbY?si=QuopOXbaWh_QW-oj"
     }
   ]
 }

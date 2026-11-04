@@ -1,0 +1,18 @@
+{
+  "title": "Angel [#]",
+  "slug": "angel-demo",
+  "kind": "demo",
+  "release_type": "demo",
+  "status": "draft",
+  "description": "Website-only recording. Add Angel's exact Cloudflare R2 audio object URL and publish when ready.",
+  "artwork": "assets/angel.webp",
+  "featured": false,
+  "tracks": [
+    {
+      "title": "Angel",
+      "audio_url": "",
+      "youtube_url": "",
+      "notes": ""
+    }
+  ]
+}
