@@ -580,10 +580,15 @@ body.sp-audio-open .site{padding-bottom:152px}
 .sp-video-cover::before{
  content:"▶";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
  display:grid;place-items:center;z-index:2;
- border:1px solid rgba(242,229,210,.8);border-radius:50%;
- background:rgba(24,18,23,.78);color:#d8e76b;
- width:clamp(32px,7vw,47px);height:clamp(32px,7vw,47px);
+ border:1px solid #ff0033;border-radius:12px;
+ background:#ff0033;color:#fff;
+ width:clamp(40px,8vw,58px);height:clamp(28px,5.5vw,40px);
  font-size:17px;padding-left:2px;pointer-events:none;
+ box-shadow:0 2px 15px #0009;
+}
+.sp-youtube-play{background:#ff0033!important;border-color:#ff0033!important;color:#fff!important}
+.release-card:hover .sp-youtube-play,.sp-recording-hit:hover .sp-youtube-play{
+ background:#db002c!important;border-color:#db002c!important;color:#fff!important
 }
 .sp-youtube-dialog{
  position:fixed;z-index:1200;inset:0;margin:auto;
@@ -628,5 +633,5 @@ body.sp-audio-open .site{padding-bottom:152px}
  .sp-youtube-dialog{width:94vw;padding:9px;max-height:90vh}
  .sp-youtube-dialog-screen{min-height:200px}
  .sp-youtube-dialog-meta{align-items:flex-start;flex-direction:column;gap:8px}
- .sp-video-cover::before{width:33px;height:33px;font-size:13px}
+ .sp-video-cover::before{width:44px;height:31px;border-radius:9px;font-size:14px}
 }

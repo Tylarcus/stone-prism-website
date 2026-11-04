@@ -75,6 +75,11 @@ assert.equal(videoCard.children[0].children.at(-1).textContent,'Single',
 const audioCard=homeGrid.children[1];
 assert.equal(audioCard.children[0].children.at(-1).textContent,'Demo',
  'Homepage audio demo badge overlays artwork');
+assert.ok(videoCard.children[1].children[1].className.includes('sp-youtube-play'),'YouTube circle uses red-specific styling');
+assert.ok(!audioCard.children[1].children[1].className.includes('sp-youtube-play'),'MP3 circle keeps green styling');
+const css=fs.readFileSync('styles.css','utf8');
+assert.match(css,/\.sp-youtube-play\{background:#ff0033/,'Video play button should use YouTube red');
+assert.match(css,/\.sp-video-cover::before[\s\S]*?background:#ff0033/,'Video poster button should be YouTube red');
 assert.equal(audioCard.dataset.spPlay,'angel-demo:0','Audio plays in dock from one tap');
 
 let prevented=false;
