@@ -80,4 +80,32 @@ assert.match(siteCSS,/\.library-grid \.sp-recording-cover-tag/,
  'Release badge must overlay cover artwork');
 console.log('Music library cards: compact homepage-style layout and no redundant links passed.');
 
+
+const visualsConfig=JSON.parse(fs.readFileSync('content/home-visuals.json','utf8'));
+assert.ok(Array.isArray(visualsConfig),'Homepage Visual Archive must be an editable CMS list');
+assert.ok(Array.isArray(built.homeVisuals),'Compiled homepage visuals must exist');
+const seenVisuals=new Set();
+const expectedVisuals=visualsConfig.filter(p=>p&&p.hidden!==true).map(p=>p.visual)
+ .filter(slug=>{
+  if(seenVisuals.has(slug))return false;
+  if(!built.visuals.some(v=>v.slug===slug))return false;
+  seenVisuals.add(slug);return true;
+ });
+assert.deepEqual(Array.from(built.homeVisuals,x=>x.slug),expectedVisuals,
+ 'Homepage Visual Archive must preserve CMS order, omit hidden/drafts and deduplicate');
+const musicHtml=fs.readFileSync('music.html','utf8');
+assert.doesNotMatch(musicHtml,/data-cms-text="music\.archive_heading"/,
+ 'Duplicate artwork section must not appear on the Music page');
+assert.doesNotMatch(musicHtml,/Audio link not yet available/,
+ 'Music must not show fake artwork-only audio placeholders');
+const uiSrc=fs.readFileSync('script.js','utf8');
+assert.match(uiSrc,/function openYouTube\(rec,id\)/,'One-tap YouTube dialog function must exist');
+assert.match(uiSrc,/function videoPoster\(id\)/,'YouTube-only cards need genuine video thumbnails');
+assert.match(uiSrc,/function videoIdForSingle\(rec\)/,'Only single-track videos should open directly');
+assert.match(uiSrc,/function addCoverBadge\(art,rec\)/,'Homepage and Music cards need shared badges');
+assert.match(uiSrc,/data\.homeVisuals/,'Homepage visuals must use ordered CMS picks');
+assert.match(fs.readFileSync('styles.css','utf8'),/\.sp-youtube-dialog-screen/,
+ 'Embedded YouTube video must have a responsive player');
+console.log('Player V3.5: home visuals, single/video badges, YouTube viewer and music-only vault passed.');
+
 console.log('Stone Prism Player V2: CMS publishing, audio and video separation checks passed.');
