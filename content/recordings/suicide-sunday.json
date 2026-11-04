@@ -6,7 +6,7 @@
   "status": "published",
   "date": "2017-11-01",
   "artwork": "/media/images/angel-1.webp",
-  "featured": false,
+  "featured": true,
   "tracks": [
     {
       "title": "Suicide Sunday",
