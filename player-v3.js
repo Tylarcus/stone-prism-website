@@ -6,7 +6,7 @@ const tracks=library.flatMap(record=>(record.tracks||[]).map((track,index)=>({
  record,track,index,source:typeof track.audio_url==='string'?track.audio_url.trim():''
 }))).filter(item=>/^(https:\/\/|assets\/|media\/|audio\/)/i.test(item.source)
  && !/(?:youtube\.com|youtu\.be)\//i.test(item.source));
-let current=-1,element=null,visualContext=null,analyser=null,frequencies=null,visualFrame=0;
+let current=-1,element=null,waveformPeaks=null,waveformTicket=0;
 let ui={},navigationId=0,lastSaveAt=0,lastSavedPosition=-1;
 const PLAYBACK_KEY='stoneprism:jukebox:resume-v1';
 const $=selector=>document.querySelector(selector);
@@ -24,10 +24,7 @@ function playbackState(){
  const playing=!!element&&!element.paused&&current>=0;
  document.body.classList.toggle('sp-audio-playing',playing);
  if(ui.play){ui.play.textContent=playing?'❚❚':'▶';ui.play.setAttribute('aria-label',playing?'Pause':'Play')}
- if(ui.meter)ui.meter.classList.toggle('is-playing',playing);
  if('mediaSession' in navigator)navigator.mediaSession.playbackState=playing?'playing':'paused';
- if(playing)startVisualizer();
- else {cancelAnimationFrame(visualFrame);visualFrame=0;}
  saveState(true);
 }
 function updatePosition(){
@@ -36,6 +33,8 @@ function updatePosition(){
  const time=element.currentTime||0;
  if(ui.time)ui.time.textContent=seconds(time)+' / '+seconds(duration);
  if(ui.seek)ui.seek.value=duration?String(Math.round(time/duration*1000)):'0';
+ if(ui.waveSeek)ui.waveSeek.value=duration?String(Math.round(time/duration*1000)):'0';
+ if(ui.wavePlayed)ui.wavePlayed.style.clipPath='inset(0 '+(duration?Math.max(0,100-time/duration*100):100)+'% 0 0)';
  saveState();
  if('mediaSession' in navigator&&navigator.mediaSession.setPositionState&&duration){
   try{navigator.mediaSession.setPositionState({duration,position:Math.min(time,duration),playbackRate:1})}catch(_){}
@@ -78,8 +77,8 @@ function restoreState(){
  if(!data||!Number.isFinite(data.saved)||Date.now()-data.saved>15*60*1000)return;
  const id=tracks.findIndex(t=>t.record.slug===data.slug&&t.index===data.index);
  if(id<0)return;
- current=id;element.crossOrigin='anonymous';element.src=tracks[id].source;element.preload='metadata';
- updateTrackUI();
+ current=id;element.src=tracks[id].source;element.preload='metadata';
+ updateTrackUI();loadWaveform(tracks[id]);
  const saved=Number(data.position);
  if(Number.isFinite(saved)&&saved>0){
   const restorePosition=()=>{
@@ -97,48 +96,64 @@ function restoreState(){
   });
  }else setStatus('Ready to resume.');
 }
-function createVisualizer(){
- if(analyser||(!window.AudioContext&&!window.webkitAudioContext))return;
- try{
-  const AudioEngine=window.AudioContext||window.webkitAudioContext;
-  visualContext=new AudioEngine();
-  const input=visualContext.createMediaElementSource(element);
-  analyser=visualContext.createAnalyser();
-  analyser.fftSize=128;analyser.smoothingTimeConstant=.72;
-  input.connect(analyser);analyser.connect(visualContext.destination);
-  frequencies=new Uint8Array(analyser.frequencyBinCount);
-  visualContext.resume().catch(()=>{});
- }catch(_){analyser=null}
+// A waveform is visual data, NOT a sound processor. Peaks are generated at
+// publish time by ffmpeg, so the visitor streams the MP3 only once.
+function clearWaveform(){
+ waveformTicket++;
+ waveformPeaks=null;
+ if(ui.wave)ui.wave.hidden=true;
+ if(ui.seek)ui.seek.hidden=false;
 }
-function startVisualizer(){
- if(visualFrame)return;
- let nextDraw=0;
- function step(now){
-  visualFrame=0;
-  if(!element||element.paused||current<0)return;
-  // Thirty frames a second are plenty for a responsive visualizer on phones.
-  if(now-nextDraw>=32&&analyser&&ui.bars?.length){
-   nextDraw=now;
-   analyser.getByteFrequencyData(frequencies);
-   const count=ui.bars.length,total=frequencies.length;
-   ui.bars.forEach((bar,index)=>{
-    // Logarithmic bucket sizes give the bass and lower mids more visual room.
-    const low=Math.max(0,Math.floor((Math.pow(index/count,1.55))*total));
-    const high=Math.min(total,Math.max(low+1,Math.ceil(Math.pow((index+1)/count,1.55)*total)));
-    let power=0;
-    for(let j=low;j<high;j++)power+=frequencies[j];
-    power/=Math.max(1,high-low);
-    const strength=Math.max(.1,Math.min(1,power/192));
-    bar.style.transform='scaleY('+strength.toFixed(2)+')';
-   });
-  }
-  visualFrame=requestAnimationFrame(step);
+function drawStaticWaveform(){
+ if(!waveformPeaks||!ui.wave||ui.wave.hidden)return;
+ const width=Math.max(100,Math.round(ui.wave.clientWidth||600));
+ const height=58,dpr=Math.min(2,window.devicePixelRatio||1);
+ const count=Math.min(280,Math.max(34,Math.floor(width/3.6)));
+ for(const canvas of [ui.waveBase,ui.wavePlayed]){
+  canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
+  canvas.style.width=width+'px';canvas.style.height=height+'px';
  }
- visualFrame=requestAnimationFrame(step);
+ const base=ui.waveBase.getContext('2d'),played=ui.wavePlayed.getContext('2d');
+ if(!base||!played)return;
+ base.setTransform(dpr,0,0,dpr,0,0);played.setTransform(dpr,0,0,dpr,0,0);
+ const colored=played.createLinearGradient(0,0,width,0);
+ colored.addColorStop(0,'#b8e849');colored.addColorStop(.3,'#e5a349');
+ colored.addColorStop(.63,'#d86657');colored.addColorStop(1,'#a478ba');
+ base.fillStyle='#786779';played.fillStyle=colored;
+ const step=width/count, gap=Math.min(1.6,step*.35);
+ for(let i=0;i<count;i++){
+  const from=Math.floor(i*waveformPeaks.length/count);
+  const to=Math.max(from+1,Math.ceil((i+1)*waveformPeaks.length/count));
+  let amplitude=0;
+  for(let k=from;k<to;k++)amplitude=Math.max(amplitude,waveformPeaks[k]||0);
+  const barHeight=Math.max(2,Math.min(height-4,amplitude*(height-4)));
+  const x=i*step, y=(height-barHeight)/2;
+  const w=Math.max(.8,step-gap);
+  base.fillRect(x,y,w,barHeight);
+  played.fillRect(x,y,w,barHeight);
+ }
+ updatePosition();
+}
+function loadWaveform(item){
+ clearWaveform();
+ const ticket=waveformTicket;
+ const filename='data/waveforms/'+encodeURIComponent(item.record.slug)+'-'+item.index+'.json';
+ fetch(filename,{cache:'default'}).then(response=>{
+  if(!response.ok)throw Error('Waveform peaks not published');
+  return response.json();
+ }).then(result=>{
+  if(ticket!==waveformTicket||active()!==item)return;
+  if(result.source!==item.source||!Array.isArray(result.peaks)||result.peaks.length<20)return;
+  waveformPeaks=result.peaks.map(x=>Number.isFinite(x)?Math.min(1,Math.max(0,x)):0);
+  ui.wave.hidden=false;ui.seek.hidden=true;
+  drawStaticWaveform();
+ }).catch(()=>{
+  // Keep native seeking, without downloading the MP3 to create a waveform.
+  if(ticket===waveformTicket&&current>=0)setStatus('Streaming on Stone Prism.');
+ });
 }
 function play(){
  if(current<0)return;
- if(visualContext?.state==='suspended')visualContext.resume().catch(()=>{});
  element.play().catch(()=>setStatus('Tap Play again if your browser blocked automatic playback.'));
 }
 function startAt(index){
@@ -146,15 +161,11 @@ function startAt(index){
  const item=tracks[index];
  clearInlineVideo();
  current=index;
- element.pause();element.crossOrigin='anonymous';element.preload='auto';element.src=item.source;
+ element.pause();element.preload='auto';element.src=item.source;
  updateTrackUI();
- // Use a single audio request; the old waveform downloaded and decoded the
- // entire MP3 a second time while the browser was trying to stream it.
- if(!analyser)createVisualizer();
- // Play during the original tap, before any asynchronous work.
- play();
- updatePosition();
- saveState(true);
+ // One tap starts the native MP3 stream before fetching tiny display-only peaks.
+ play();loadWaveform(item);
+ updatePosition();saveState(true);
 }
 function selectTrack(slug,index=0){
  const target=tracks.findIndex(item=>item.record.slug===slug&&item.index===Number(index));
@@ -174,7 +185,7 @@ function next(){if(current>=0&&current<tracks.length-1)startAt(current+1)}
 function pause(){element?.pause()}
 function stop(){
  if(!element)return;
- element.pause();element.removeAttribute('src');element.load();
+ element.pause();clearWaveform();element.removeAttribute('src');element.load();
  current=-1;lastSavedPosition=-1;lastSaveAt=0;
  if(ui.dock)ui.dock.hidden=true;
  document.body.classList.remove('sp-audio-open','sp-audio-playing');
@@ -200,24 +211,29 @@ function makeDock(){
  const buttons=make('div','sp-jukebox-actions');
  buttons.append(prev,playButton,nextButton,close);
  const info=make('div','sp-jukebox-info');info.append(art,meta,buttons);
- const meter=make('div','sp-jukebox-spectrum');
- meter.setAttribute('aria-hidden','true');
- const bars=[];
- for(let i=0;i<48;i++){const b=make('span');b.style.transform='scaleY(.12)';meter.append(b);bars.push(b)}
+ const wave=make('div','sp-jukebox-static-wave');wave.hidden=true;
+ wave.setAttribute('aria-label','Static audio waveform: drag to seek through the song');
+ const waveBase=make('canvas','sp-waveform-base');
+ const wavePlayed=make('canvas','sp-waveform-played');
+ const waveSeek=make('input','sp-waveform-seek');
+ waveSeek.type='range';waveSeek.min='0';waveSeek.max='1000';waveSeek.value='0';
+ waveSeek.setAttribute('aria-label','Seek through song waveform');
+ wave.append(waveBase,wavePlayed,waveSeek);
  const seek=make('input','sp-jukebox-seek');seek.type='range';seek.min='0';seek.max='1000';seek.value='0';
  seek.setAttribute('aria-label','Seek through current track');
- const timeline=make('div','sp-jukebox-timeline');timeline.append(seek);
+ const timeline=make('div','sp-jukebox-timeline');timeline.append(wave,seek);
  const time=make('span','sp-jukebox-time','0:00 / 0:00');
- const lower=make('div','sp-jukebox-lower');lower.append(meter,timeline,time);
+ const lower=make('div','sp-jukebox-lower');lower.append(timeline,time);
  const status=make('div','sp-jukebox-status','');status.setAttribute('role','status');
  dock.append(info,lower,status);
  document.body.append(dock);
- ui={dock,image:art,title,album,details,prev,play:playButton,next:nextButton,close,seek,time,meter,bars,status};
+ ui={dock,image:art,title,album,details,prev,play:playButton,next:nextButton,close,seek,waveSeek,wave,waveBase,wavePlayed,time,status};
  playButton.onclick=()=>element.paused?play():pause();
  prev.onclick=previous;nextButton.onclick=next;close.onclick=stop;
- seek.oninput=()=>{
-  if(element&&Number.isFinite(element.duration))element.currentTime=Number(seek.value)/1000*element.duration;
+ for(const control of [seek,waveSeek])control.oninput=()=>{
+  if(element&&Number.isFinite(element.duration))element.currentTime=Number(control.value)/1000*element.duration;
  };
+ window.addEventListener('resize',drawStaticWaveform,{passive:true});
 }
 function initMediaSession(){
  if(!('mediaSession' in navigator))return;

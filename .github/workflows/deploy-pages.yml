@@ -31,6 +31,9 @@ jobs:
           node --check tools/build.mjs
           node tools/test-music.mjs
           node tools/test-player-v3.mjs
+          python3 tools/test_waveforms.py
+      - name: Generate lightweight static waveform peaks from R2 MP3s
+        run: python3 tools/build_waveforms.py
       - name: Stage only public website files
         run: |
           mkdir -p _site

@@ -10,6 +10,7 @@ const elements=[];
 class FakeNode{
  constructor(tag='div'){this.tagName=tag;this.children=[];this.events={};this.style={};this.hidden=false;this.attributes={};this.classList={add(){},remove(){},toggle(){}}}
  append(...items){this.children.push(...items)}
+ getContext(){return {setTransform(){},fillRect(){},createLinearGradient(){return {addColorStop(){}}}}}
  appendChild(node){this.append(node)}
  setAttribute(name,value){this.attributes[name]=value}
  addEventListener(type,handler){this.events[type]=handler}
@@ -48,9 +49,15 @@ const window={
  ]},
  addEventListener:(key,handler)=>{winEvents[key]=handler}
 };
+const requested=[];
+const mockFetch=uri=>{
+ requested.push(uri);
+ const source=uri.includes('first-1.json')?'https://example.net/two.mp3':'https://example.net/one.mp3';
+ return Promise.resolve({ok:true,json:()=>Promise.resolve({source,duration:240,peaks:Array(512).fill(.7)})});
+};
 const sandbox={
  window,document,history,navigator:{},location:{href:'https://stoneprism.music/music.html',pathname:'/music.html',search:'',origin:'https://stoneprism.music'},
- Audio:FakeAudio,URL,Uint8Array,sessionStorage,
+ Audio:FakeAudio,URL,Uint8Array,sessionStorage,fetch:mockFetch,
  requestAnimationFrame:()=>42,cancelAnimationFrame:()=>{},
  Promise,console
 };
@@ -83,8 +90,9 @@ assert.equal(resume.index,0);
 assert.equal(resume.playing,true);
 assert.equal(resume.position,46.2);
 const code=fs.readFileSync('player-v3.js','utf8');
-assert.ok(!/WaveSurfer\.create|loadWaveSurfer|drawWave/.test(code),'No second MP3 download for waveform rendering');
-assert.match(code,/createAnalyser\(/,'A real-time analyser is used for the vertical spectrum');
+assert.doesNotMatch(code,/WaveSurfer\.create|createMediaElementSource|createAnalyser|AudioContext/,'Playback must not use Web Audio or decode MP3s in-browser');
+assert.match(code,/drawStaticWaveform\(/,'Precomputed static waveform renderer must exist');
+assert.ok(requested.every(uri=>/^data\/waveforms\/first-[01]\.json$/.test(uri)),'Only tiny waveform JSON files are fetched, not MP3s');
 const newEvents={};
 const refreshedDocument={...document,addEventListener:(event,handler)=>{newEvents[event]=handler}};
 const refreshedWindow={...window,STONE_PRISM_PLAYER:undefined};
@@ -94,4 +102,4 @@ newEvents.DOMContentLoaded?.();
 assert.equal(elements.length,2,'Reload creates a new audio element');
 assert.equal(elements[1].src,'https://example.net/one.mp3','Reload restores the saved song');
 assert.equal(elements[1].playCalls,1,'Reload attempts to resume when browser permits autoplay');
-console.log('Player V3.1: one-tap, auto-advance, reload recovery, real-time spectrum and one-stream checks passed.');
+console.log('Player V3.2: one-tap, auto-advance, reload recovery, static peaks and native-only audio passed.');
