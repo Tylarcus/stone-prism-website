@@ -117,9 +117,15 @@ for(const pick of rawHomeMusic){
   if(!visuals.some(x=>x.slug===visualSlug))continue;
   kind='visual';slug=visualSlug;
  }else continue;
+ // Pages CMS can preserve both a recording and a Visual Archive selection
+ // in one card. In that case treat the selected visual as an artwork override
+ // (not a second card), unless the explicit override field is populated.
+ const coverSelection=typeof pick.artwork_visual_override==='string'&&pick.artwork_visual_override.trim()
+  ?pick.artwork_visual_override.trim()
+  :kind==='recording'?visualSlug:'';
  homeMusic.push({
   kind,slug,
-  artwork_override:visuals.find(v=>v.slug===pick.artwork_visual_override)?.image||'',
+  artwork_override:visuals.find(v=>v.slug===coverSelection)?.image||'',
   title:String(pick.title||'').slice(0,120).trim(),
   subtitle:String(pick.subtitle||'').slice(0,120).trim()
  });
