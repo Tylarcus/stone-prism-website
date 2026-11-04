@@ -6,9 +6,9 @@ for(const name of ['index.html','music.html','visuals.html','recording.html']){
  const html=fs.readFileSync(name,'utf8');
  assert.match(html,/<script src="player-v3\.js"><\/script>/,'Every page needs the persistent player');
 }
-const elements=[];
+const elements=[],nodes=[];
 class FakeNode{
- constructor(tag='div'){this.tagName=tag;this.children=[];this.events={};this.style={};this.hidden=false;this.attributes={};this.classList={add(){},remove(){},toggle(){}}}
+ constructor(tag='div'){nodes.push(this);this.tagName=tag;this.children=[];this.events={};this.style={};this.hidden=false;this.attributes={};this.classList={add(){},remove(){},toggle(){}}}
  append(...items){this.children.push(...items)}
  getContext(){return {setTransform(){},fillRect(){},createLinearGradient(){return {addColorStop(){}}}}}
  appendChild(node){this.append(node)}
@@ -44,7 +44,7 @@ const document={
 const history={state:null,replaceState(state){this.state=state},pushState(state){this.state=state}};
 const window={
  STONE_PRISM_CONTENT:{recordings:[
-  {slug:'first',title:'First EP',artwork:'assets/angel.webp',tracks:[{title:'Track one',audio_url:'https://example.net/one.mp3'},{title:'Track two',audio_url:'https://example.net/two.mp3'}]},
+  {slug:'first',title:'First EP',kind:'demo',date:'2017-11-01',artwork:'assets/angel.webp',tracks:[{title:'Track one',audio_url:'https://example.net/one.mp3'},{title:'Track two',audio_url:'https://example.net/two.mp3'}]},
   {slug:'second',title:'Second EP',tracks:[{title:'Video only',youtube_url:'https://www.youtube.com/watch?v=zvHoJMJKBbY',audio_url:''}]}
  ]},
  addEventListener:(key,handler)=>{winEvents[key]=handler}
@@ -70,6 +70,8 @@ assert.equal(player.playTrack('first',0),true,'The first song is playable');
 const audio=elements[0];
 assert.equal(audio.playCalls,1,'First click must immediately call audio.play exactly once');
 assert.equal(audio.src,'https://example.net/one.mp3');
+const detailLink=nodes.filter(n=>n.className==='sp-jukebox-details')[0];
+assert.equal(detailLink.textContent,'Demo · 2017 ↗','Dock shows meaningful metadata instead of generic Details');
 assert.equal(player.playTrack('second',0),false,'Video-only songs are not audio streams');
 audio.emit('ended');
 assert.equal(audio.src,'https://example.net/two.mp3','Track end must automatically select the next song');
@@ -102,4 +104,8 @@ newEvents.DOMContentLoaded?.();
 assert.equal(elements.length,2,'Reload creates a new audio element');
 assert.equal(elements[1].src,'https://example.net/one.mp3','Reload restores the saved song');
 assert.equal(elements[1].playCalls,1,'Reload attempts to resume when browser permits autoplay');
+const restoredStatus=nodes.filter(n=>n.className==='sp-jukebox-status').at(-1);
+restoredStatus.textContent='Paused after reload — tap Play to continue.';
+elements[1].emit('play');
+assert.equal(restoredStatus.textContent,'','Successful resume clears stale reload warning');
 console.log('Player V3.2: one-tap, auto-advance, reload recovery, static peaks and native-only audio passed.');
