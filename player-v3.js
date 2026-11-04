@@ -19,7 +19,7 @@ function clearInlineVideo(){
  if(embed)embed.replaceChildren();
  if(panel)panel.hidden=true;
 }
-function setStatus(message){if(ui.status)ui.status.textContent=message||''}
+function setStatus(message){if(ui.status){ui.status.textContent=message||'';ui.status.classList.toggle('sp-status-quiet',!message||message==='Streaming on Stone Prism.')}}
 function playbackState(){
  const playing=!!element&&!element.paused&&current>=0;
  document.body.classList.toggle('sp-audio-playing',playing);
@@ -107,7 +107,7 @@ function clearWaveform(){
 function drawStaticWaveform(){
  if(!waveformPeaks||!ui.wave||ui.wave.hidden)return;
  const width=Math.max(100,Math.round(ui.wave.clientWidth||600));
- const height=58,dpr=Math.min(2,window.devicePixelRatio||1);
+ const height=Math.max(30,Math.round(ui.wave.clientHeight||58)),dpr=Math.min(2,window.devicePixelRatio||1);
  const count=Math.min(280,Math.max(34,Math.floor(width/3.6)));
  for(const canvas of [ui.waveBase,ui.wavePlayed]){
   canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);

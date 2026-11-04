@@ -36,4 +36,30 @@ for(const rec of built.recordings){
    'YouTube video URLs must be canonical and safe for an iframe');
  }
 }
+
+const homeConfig=JSON.parse(fs.readFileSync('content/home-music.json','utf8'));
+assert.ok(Array.isArray(homeConfig),'Homepage CMS list must be an array');
+assert.ok(Array.isArray(built.homeMusic),'Homepage cards must be compiled into site data');
+const expectedHome=[];
+for(const pick of homeConfig){
+ if(!pick||pick.hidden===true)continue;
+ const recSlug=typeof pick.recording==='string'?pick.recording.trim():'';
+ const visualSlug=typeof pick.visual==='string'?pick.visual.trim():'';
+ if(recSlug){
+  if(built.recordings.find(r=>r.slug===recSlug))expectedHome.push({kind:'recording',slug:recSlug});
+ }else if(visualSlug){
+  if(built.visuals.find(v=>v.slug===visualSlug))expectedHome.push({kind:'visual',slug:visualSlug});
+ }
+}
+const actualHome=Array.from(built.homeMusic,x=>({kind:x.kind,slug:x.slug}));
+assert.deepEqual(actualHome,expectedHome,'Homepage cards must follow CMS order and include only published sources');
+for(const pick of built.homeMusic){
+ assert.ok(pick.kind==='recording'||pick.kind==='visual','Home card type must be validated');
+ assert.equal(typeof pick.title,'string');
+ assert.equal(typeof pick.subtitle,'string');
+ assert.ok(pick.title.length<=120&&pick.subtitle.length<=120,'Home card captions must be bounded');
+}
+assert.match(fs.readFileSync('script.js','utf8'),/function initHomepageMusic\(\)/,'Home renderer must be available');
+console.log('Homepage CMS: ordered picks, artwork references and draft hiding passed.');
+
 console.log('Stone Prism Player V2: CMS publishing, audio and video separation checks passed.');

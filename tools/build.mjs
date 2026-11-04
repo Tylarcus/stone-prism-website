@@ -71,10 +71,34 @@ const visuals=loadCollection('visuals').filter(x=>x.published===true&&normalizeP
  featured_home:!!x.featured_home
 })).sort((a,b)=>a.order-b.order||a.title.localeCompare(b.title));
 for(const v of visuals){if(!ids.has(v.category)){ids.add(v.category);visualCategories.push({id:v.category,label:v.category.replace(/-/g,' ')})}}
+// Ordered homepage music cards edited in Pages CMS. Only published
+// recordings and published visuals are allowed into generated public data.
+const rawHomeMusic=JSON.parse(fs.readFileSync(join('content/home-music.json'),'utf8'));
+if(!Array.isArray(rawHomeMusic))throw Error('Homepage Music must be an array');
+const homeMusic=[];
+for(const pick of rawHomeMusic){
+ if(!pick||typeof pick!=='object'||pick.hidden===true)continue;
+ const recordingSlug=typeof pick.recording==='string'?pick.recording.trim():'';
+ const visualSlug=typeof pick.visual==='string'?pick.visual.trim():'';
+ let kind='',slug='';
+ if(recordingSlug&&validSlug(recordingSlug)){
+  if(!recordings.some(x=>x.slug===recordingSlug))continue;
+  kind='recording';slug=recordingSlug;
+ }else if(visualSlug&&validSlug(visualSlug)){
+  if(!visuals.some(x=>x.slug===visualSlug))continue;
+  kind='visual';slug=visualSlug;
+ }else continue;
+ homeMusic.push({
+  kind,slug,
+  title:String(pick.title||'').slice(0,120).trim(),
+  subtitle:String(pick.subtitle||'').slice(0,120).trim()
+ });
+}
 // Single-file Pages CMS editor for all general site copy and search metadata.
 const siteText=JSON.parse(fs.readFileSync(join('content/site-text.json'),'utf8'));
-const content={version:'2.6',recordings,visuals,visualCategories,siteText};
+const content={version:'2.7',recordings,visuals,visualCategories,siteText,homeMusic};
 fs.mkdirSync(join('data'),{recursive:true});
 const json=JSON.stringify(content).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
 fs.writeFileSync(join('data/site-content.js'),`/* Built from CMS content. Do not hand-edit. */\nwindow.STONE_PRISM_CONTENT=${json};\n`);
 console.log(`Stone Prism content: ${recordings.length} published recordings, ${visuals.length} visuals, ${visualCategories.length} categories`);
+console.log(`Homepage featured cards: ${homeMusic.length} published selections`);

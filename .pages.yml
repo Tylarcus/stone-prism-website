@@ -139,6 +139,42 @@ content:
               - name: description
                 label: Search description
                 type: text
+  - name: homepage_music
+    label: Homepage Music / Featured Cards
+    type: file
+    path: content/home-music.json
+    format: json
+    list: true
+    fields:
+      - name: recording
+        label: Recording to feature (choose ONE source)
+        type: reference
+        description: Select a published recording to start playback when tapped. Leave blank for an artwork-only card. Draft recordings are hidden automatically.
+        options:
+          collection: recordings
+          value: "{fields.slug}"
+          label: "{fields.title}"
+          search: "title"
+      - name: visual
+        label: Visual Archive artwork (instead of a recording)
+        type: reference
+        description: Choose an artwork if this card is not a recording. Leave blank when a recording is selected.
+        options:
+          collection: visuals
+          value: "{fields.slug}"
+          label: "{fields.title}"
+          search: "title"
+      - name: title
+        label: Homepage card title override (optional)
+        type: string
+        description: Leave blank to use the selected recording or artwork title.
+      - name: subtitle
+        label: Small caption under the title (optional)
+        type: string
+        description: e.g. Website-exclusive demo, Single, or Artwork archive.
+      - name: hidden
+        label: Hide this homepage card
+        type: boolean
   - name: recordings
     label: Music / Official releases & demos
     type: collection
