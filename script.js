@@ -52,6 +52,53 @@ function initSiteText(){
   footer.append(holder);
  });
 }
+// Render CMS-selected homepage music cards, preserving the original V2.5
+// three-across layout. The ordered top-level JSON array controls card order.
+function initHomepageMusic(){
+ const grid=$('.releases .release-grid');
+ if(!grid||!Array.isArray(data.homeMusic))return;
+ const items=[];
+ for(const pick of data.homeMusic){
+  if(!pick||!pick.slug)continue;
+  const isRecording=pick.kind==='recording';
+  const source=isRecording
+   ?data.recordings.find(r=>r.slug===pick.slug)
+   :data.visuals.find(v=>v.slug===pick.slug);
+  if(!source)continue;
+  const title=pick.title||source.title||'Stone Prism';
+  const subtitle=pick.subtitle||(isRecording?prettyType(source):'Artwork archive');
+  const image=isRecording?source.artwork:source.image;
+  const link=el('a','release-card');
+  let playable=false;
+  if(isRecording){
+   const first=(source.tracks||[]).findIndex(t=>url(t.audio_url)&&!/(?:youtube\.com|youtu\.be)\//i.test(t.audio_url));
+   playable=first>=0;
+   link.href=recordingLink(source.slug);
+   if(playable){
+    link.dataset.spPlay=source.slug+':'+first;
+    link.setAttribute('aria-label','Play '+title+' on Stone Prism');
+   }else link.setAttribute('aria-label','Open '+title+' details');
+  }else{
+   link.href='visuals.html';
+   if(url(image)){
+    link.dataset.image=url(image);
+    link.dataset.title=title+' — artwork';
+   }
+   link.setAttribute('aria-label','View '+title+' artwork');
+  }
+  const art=el('div','release-art');
+  if(url(image)){
+   const pic=el('img');pic.src=url(image);pic.alt=title+' artwork';pic.loading='lazy';
+   art.append(pic);
+  }else art.append(el('div','recording-cover-placeholder','SP'));
+  const foot=el('div','release-foot');
+  const text=el('div');text.append(el('div','release-name',title),el('div','release-sub',subtitle));
+  const action=el('span','play-circle'+(playable?' sp-home-play':''),playable?'▶':'↗');
+  action.setAttribute('aria-hidden','true');
+  foot.append(text,action);link.append(art,foot);items.push(link);
+ }
+ grid.replaceChildren(...items);
+}
 function initNavigation(){
  const nav=$('#mainNav'),menu=$('#menuBtn');if(!nav||!menu)return;
  menu.onclick=()=>{const o=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(o))};
@@ -267,7 +314,7 @@ function initGridDensity(){
  control._spGridSync=()=>sync();
 }
 
-function initPage(){initSiteText();initNavigation();initDialog();initVisuals();initMusic();initRecording();initGridDensity()}
+function initPage(){initSiteText();initNavigation();initDialog();initHomepageMusic();initVisuals();initMusic();initRecording();initGridDensity()}
 window.STONE_PRISM_APP={init:initPage,stopAudio:()=>window.STONE_PRISM_PLAYER?.stop()};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initPage);else initPage();
 })();
