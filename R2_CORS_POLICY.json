@@ -1,0 +1,22 @@
+[
+  {
+    "AllowedOrigins": [
+      "https://stoneprism.music",
+      "https://www.stoneprism.music",
+      "https://tylarcus.github.io"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "HEAD"
+    ],
+    "AllowedHeaders": [
+      "Range"
+    ],
+    "ExposeHeaders": [
+      "Content-Length",
+      "Content-Range",
+      "Accept-Ranges"
+    ],
+    "MaxAgeSeconds": 3600
+  }
+]
