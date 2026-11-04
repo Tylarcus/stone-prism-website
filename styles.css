@@ -486,3 +486,22 @@ body.sp-audio-open .site{padding-bottom:152px}
  .sp-jukebox-time{flex-basis:72px;min-width:0;font-size:.65rem}
 }
 @media(prefers-reduced-motion:reduce){.sp-jukebox-static-wave canvas{transition:none}}
+
+
+/* V3.3 — make the MOBILE dock less obtrusive; desktop remains unchanged. */
+@media(max-width:700px){
+ body.sp-audio-open .site{padding-bottom:116px}
+ .sp-jukebox{padding:5px max(8px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+ .sp-jukebox-info{min-height:36px;gap:7px}
+ .sp-jukebox-art{width:34px;height:34px;flex-basis:34px}
+ .sp-jukebox-title{font-size:.79rem}
+ .sp-jukebox-details{font-size:.57rem;margin-top:1px}
+ .sp-jukebox-button{width:32px;min-width:32px;height:32px}
+ .sp-jukebox-close{width:27px;min-width:27px;height:32px}
+ .sp-jukebox-actions{gap:2px}
+ .sp-jukebox-lower{min-height:41px;margin-top:0;gap:7px}
+ .sp-jukebox-timeline,.sp-jukebox-static-wave{height:39px}
+ .sp-jukebox-time{flex-basis:70px;font-size:.64rem}
+ .sp-jukebox-status{margin:1px auto 0;min-height:0;font-size:.57rem;line-height:1.2}
+ .sp-jukebox-status.sp-status-quiet{display:none}
+}
