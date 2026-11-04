@@ -17,9 +17,11 @@ jobs:
       - name: Syntax check
         run: |
           node --check script.js
+          node --check player-v3.js
           node --check tools/build.mjs
           node --check tools/test-music.mjs
       - name: Build published content
         run: node tools/build.mjs
       - name: Test audio and video separation
         run: node tools/test-music.mjs
+          node tools/test-player-v3.mjs
