@@ -1,10 +1,9 @@
 {
   "title": "Frog poster",
   "slug": "frog-poster",
-  "description": "The Stone Prism frog mascot in a grungy composition",
+  "description": "The Stone Prism frog! Tbh I found him in the middle of the road crunchy AF.",
   "image": "assets/frog-poster.webp",
   "category": "collage",
-  "order": 30,
   "published": true,
-  "featured_home": true
+  "order": 30
 }
