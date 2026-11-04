@@ -1,10 +1,9 @@
 {
-  "title": "Wood illustration",
-  "slug": "wood-illustration",
-  "description": "Early figure sketch on distressed wood",
+  "title": "Anotomy of Frog on Wood",
+  "slug": "anatomy-of-frog-on-wood",
+  "description": "More wood than frog!  Took a bit of work to make this picture.",
   "image": "assets/wood.webp",
   "category": "illustration",
-  "order": 10,
   "published": true,
-  "featured_home": true
+  "order": 10
 }
