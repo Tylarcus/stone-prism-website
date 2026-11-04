@@ -6,7 +6,7 @@
     "visuals_link": "Browse visuals →"
   },
   "music": {
-    "intro": "Recordings, artwork, and experiments from Stone Prism.",
+    "intro": "Recordings and experimental demos from Stone Prism.",
     "library_label": "THE STONE PRISM MUSIC LIBRARY",
     "library_heading": "The Recording Vault",
     "archive_heading": "Archive artwork",
@@ -15,11 +15,11 @@
     "empty_demo": "No website-exclusive demos are published yet."
   },
   "visuals": {
-    "intro": "The images, artifacts, and mischief behind the music.",
+    "intro": "The images, artifacts, and crap behind the music.",
     "description": "Artwork, illustrations, old flyers, and instruments that have helped shape Stone Prism's visual identity. Filter the archive or open any image for a closer look."
   },
   "recording": {
-    "intro": "Recordings, demos, and the stories behind the noise."
+    "intro": "Recordings, demos, and noise."
   },
   "contact": {
     "heading": "CONTACT",
@@ -27,8 +27,8 @@
   },
   "seo": {
     "home": {
-      "title": "Stone Prism | Music & Visuals",
-      "description": "Stone Prism — music, visual experiments, and a collection of noise and artwork."
+      "title": "Stone Prism | Music",
+      "description": "Stone Prism — Official band website. A collection of music, noise and artwork."
     },
     "music": {
       "title": "Music / Releases | Stone Prism",
