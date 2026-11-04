@@ -177,10 +177,7 @@ content:
     type: file
     path: content/home-visuals.json
     format: json
-    list:
-      collapsible:
-        collapsed: true
-        summary: "{visual}"
+    list: true
     fields:
       - name: visual
         label: Artwork to show on homepage
