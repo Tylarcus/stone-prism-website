@@ -1,10 +1,9 @@
 {
-  "title": "Teeth concept",
-  "slug": "teeth-concept",
-  "description": "Teeth collage with draft generator marks",
+  "title": "Mouthwash Concept Art",
+  "slug": "mouthwash-concept-art",
+  "description": "Mouthwash Album concept art.  Currently unreleased.",
   "image": "assets/teeth.webp",
   "category": "collage",
-  "order": 80,
   "published": true,
-  "featured_home": false
+  "order": 80
 }
