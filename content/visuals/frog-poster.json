@@ -1,0 +1,10 @@
+{
+  "title": "Frog poster",
+  "slug": "frog-poster",
+  "description": "The Stone Prism frog mascot in a grungy composition",
+  "image": "assets/frog-poster.webp",
+  "category": "collage",
+  "order": 30,
+  "published": true,
+  "featured_home": true
+}

@@ -1,0 +1,10 @@
+{
+  "title": "Teeth concept",
+  "slug": "teeth-concept",
+  "description": "Teeth collage with draft generator marks",
+  "image": "assets/teeth.webp",
+  "category": "collage",
+  "order": 80,
+  "published": true,
+  "featured_home": false
+}

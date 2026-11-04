@@ -1,0 +1,10 @@
+{
+  "title": "Frog cover",
+  "slug": "frog-cover",
+  "description": "Illustrated frog mascot",
+  "image": "assets/frog-cover.webp",
+  "category": "illustration",
+  "order": 70,
+  "published": true,
+  "featured_home": false
+}

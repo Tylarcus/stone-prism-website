@@ -1,0 +1,10 @@
+{
+  "title": "Customized guitar",
+  "slug": "customized-guitar",
+  "description": "The Stone Prism guitar",
+  "image": "assets/guitar.webp",
+  "category": "gear",
+  "order": 50,
+  "published": true,
+  "featured_home": true
+}

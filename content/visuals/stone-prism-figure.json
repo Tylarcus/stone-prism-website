@@ -1,0 +1,10 @@
+{
+  "title": "Stone Prism figure",
+  "slug": "stone-prism-figure",
+  "description": "Circular, Vitruvian-inspired artwork",
+  "image": "assets/vitruvian.webp",
+  "category": "illustration",
+  "order": 20,
+  "published": true,
+  "featured_home": true
+}

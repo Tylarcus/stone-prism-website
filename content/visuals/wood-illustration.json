@@ -1,0 +1,10 @@
+{
+  "title": "Wood illustration",
+  "slug": "wood-illustration",
+  "description": "Early figure sketch on distressed wood",
+  "image": "assets/wood.webp",
+  "category": "illustration",
+  "order": 10,
+  "published": true,
+  "featured_home": true
+}

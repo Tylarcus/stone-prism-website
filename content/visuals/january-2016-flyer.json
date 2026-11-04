@@ -1,0 +1,10 @@
+{
+  "title": "January 2016 flyer",
+  "slug": "january-2016-flyer",
+  "description": "Original Stone Prism concert flyer",
+  "image": "assets/flyer.webp",
+  "category": "collage",
+  "order": 40,
+  "published": true,
+  "featured_home": true
+}

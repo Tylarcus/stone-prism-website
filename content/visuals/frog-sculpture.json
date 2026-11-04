@@ -1,0 +1,10 @@
+{
+  "title": "Frog sculpture",
+  "slug": "frog-sculpture",
+  "description": "Frog sculpture in dirt and textured paper",
+  "image": "assets/frog-sculpture.webp",
+  "category": "collage",
+  "order": 90,
+  "published": true,
+  "featured_home": false
+}
