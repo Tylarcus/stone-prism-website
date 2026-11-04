@@ -7,7 +7,7 @@ const tracks=library.flatMap(record=>(record.tracks||[]).map((track,index)=>({
 }))).filter(item=>/^(https:\/\/|assets\/|media\/|audio\/)/i.test(item.source)
  && !/(?:youtube\.com|youtu\.be)\//i.test(item.source));
 let current=-1,element=null,visualContext=null,analyser=null,frequencies=null,visualFrame=0;
-let ui={},navigationId=0,lastSaveAt=0;
+let ui={},navigationId=0,lastSaveAt=0,lastSavedPosition=-1;
 const PLAYBACK_KEY='stoneprism:jukebox:resume-v1';
 const $=selector=>document.querySelector(selector);
 const make=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
@@ -64,8 +64,8 @@ function updateTrackUI(){
 function saveState(force=false){
  if(current<0||!element)return;
  const now=Date.now();
- if(!force&&now-lastSaveAt<1500)return;
- lastSaveAt=now;
+ if(!force&&now-lastSaveAt<1500&&Math.abs((element.currentTime||0)-lastSavedPosition)<2)return;
+ lastSaveAt=now;lastSavedPosition=element.currentTime||0;
  try{sessionStorage.setItem(PLAYBACK_KEY,JSON.stringify({
   slug:tracks[current].record.slug,index:tracks[current].index,
   position:Math.max(0,element.currentTime||0),playing:!element.paused,
@@ -175,7 +175,7 @@ function pause(){element?.pause()}
 function stop(){
  if(!element)return;
  element.pause();element.removeAttribute('src');element.load();
- current=-1;
+ current=-1;lastSavedPosition=-1;lastSaveAt=0;
  if(ui.dock)ui.dock.hidden=true;
  document.body.classList.remove('sp-audio-open','sp-audio-playing');
  try{sessionStorage.removeItem(PLAYBACK_KEY)}catch(_){}
