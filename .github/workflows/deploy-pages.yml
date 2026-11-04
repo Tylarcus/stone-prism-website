@@ -27,8 +27,10 @@ jobs:
       - name: Verify media fields and player
         run: |
           node --check script.js
+          node --check player-v3.js
           node --check tools/build.mjs
           node tools/test-music.mjs
+          node tools/test-player-v3.mjs
       - name: Stage only public website files
         run: |
           mkdir -p _site
