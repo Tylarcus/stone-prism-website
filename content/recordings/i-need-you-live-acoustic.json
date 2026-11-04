@@ -10,8 +10,9 @@
   "tracks": [
     {
       "title": "I Need You (Live Acoustic)",
-      "audio_url": "https://www.youtube.com/watch?v=zvHoJMJKBbY&list=OLAK5uy_lylJbcxxnSuWLcNQQnTOgLNkfCf35zjwU",
-      "notes": "Original recording from 2017"
+      "audio_url": "",
+      "notes": "Original recording from 2017",
+      "youtube_url": "https://www.youtube.com/watch?v=zvHoJMJKBbY&list=OLAK5uy_lylJbcxxnSuWLcNQQnTOgLNkfCf35zjwU"
     }
   ]
 }
