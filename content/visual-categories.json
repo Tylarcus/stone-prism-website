@@ -10,5 +10,9 @@
   {
     "id": "gear",
     "label": "Instruments"
+  },
+  {
+    "id": "album",
+    "label": "Album Art"
   }
 ]
