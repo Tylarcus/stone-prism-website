@@ -14,6 +14,14 @@ for(const [file,page] of [['index.html','home'],['music.html','music'],['visuals
  html=html.replace(/(<([a-z][a-z0-9-]*)\b[^>]*\bdata-cms-text="([^"]+)"[^>]*>)([\s\S]*?)(<\/\2>)/g,(whole,open,tag,key,old,close)=>{
   const value=lookup(key);return typeof value==='string'?open+esc(value)+close:whole;
  });
+ // A successful CMS publish creates new site-content.js. Version the staged
+ // CSS/JS URLs by commit so mobile browsers do not reuse stale metadata/artwork.
+ // Source HTML stays untouched; only the deployed _site copy is modified.
+ const revision=(process.env.GITHUB_SHA||'').slice(0,12);
+ if(revision){
+  html=html.replace(/(href|src)="(styles[.]css|script[.]js|player-v3[.]js|data[/]site-content[.]js)"/g,
+   (all,attribute,asset)=>attribute+'="'+asset+'?v='+revision+'"');
+ }
  const title=lookup(`seo.${page}.title`),description=lookup(`seo.${page}.description`);
  if(typeof title==='string'&&title)html=html.replace(/<title>[\s\S]*?<\/title>/i,`<title>${esc(title)}</title>`);
  if(typeof description==='string')html=html.replace(/<meta\b[^>]*\bname="description"[^>]*>/i,tag=>tag.replace(/\bcontent="[^"]*"/,`content="${esc(description)}"`));

@@ -379,9 +379,9 @@ content:
           label: "{fields.title}"
           search: "title"
       - name: visual
-        label: Visual Archive artwork (instead of a recording)
+        label: Visual Archive image (artwork-only card, or cover fallback)
         type: reference
-        description: Choose an artwork if this card is not a recording. Leave blank when a recording is selected.
+        description: With no recording selected, show this image as an artwork card. With a recording selected, use this image as a fallback homepage cover override. The dedicated Homepage-only artwork override takes priority.
         options:
           collection: visuals
           value: "{fields.slug}"
