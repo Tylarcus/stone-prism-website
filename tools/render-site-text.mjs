@@ -19,7 +19,7 @@ for(const [file,page] of [['index.html','home'],['music.html','music'],['visuals
  // Source HTML stays untouched; only the deployed _site copy is modified.
  const revision=(process.env.GITHUB_SHA||'').slice(0,12);
  if(revision){
-  html=html.replace(/(href|src)="(styles\\.css|script\\.js|player-v3\\.js|data\\/site-content\\.js)"/g,
+  html=html.replace(/(href|src)="(styles[.]css|script[.]js|player-v3[.]js|data[/]site-content[.]js)"/g,
    (all,attribute,asset)=>attribute+'="'+asset+'?v='+revision+'"');
  }
  const title=lookup(`seo.${page}.title`),description=lookup(`seo.${page}.description`);
