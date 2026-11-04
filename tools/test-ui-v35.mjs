@@ -81,6 +81,18 @@ const css=fs.readFileSync('styles.css','utf8');
 assert.match(css,/\.sp-youtube-play\{background:#ff0033/,'Video play button should use YouTube red');
 assert.match(css,/\.sp-video-cover::before[\s\S]*?background:#ff0033/,'Video poster button should be YouTube red');
 assert.equal(audioCard.dataset.spPlay,'angel-demo:0','Audio plays in dock from one tap');
+data.homeMusic[1].artwork_override='assets/frog-cover.webp';
+ui.initHomepageMusic();
+assert.equal(homeGrid.children[1].children[0].children[0].src,'assets/frog-cover.webp',
+ 'Homepage card can choose alternate Visual Archive image without altering record');
+assert.equal(audio.artwork,'assets/angel.webp','Homepage override must not mutate recording art');
+data.homeMusic[0].artwork_override='assets/teeth.webp';
+ui.initHomepageMusic();
+assert.equal(homeGrid.children[0].children[0].children[0].src,'assets/teeth.webp',
+ 'Homepage override must win over default YouTube preview');
+assert.equal(homeGrid.children[0].children[1].children[1].textContent,'▶',
+ 'Homepage artwork override must preserve red YouTube Play control');
+
 
 let prevented=false;
 videoCard.listeners.click({preventDefault(){prevented=true}});
@@ -94,6 +106,11 @@ assert.equal(audioPauseCount,1,'Opening video pauses the audio dock');
 ui.closeVideoDialog();
 assert.equal(screen.children.length,0,'Closing YouTube removes iframe and stops video');
 
+audio.artwork_custom=true;
+audio.artwork='assets/wood.webp';
+const musicAudioCard=ui.makeRecording(audio);
+assert.equal(musicAudioCard.children[0].children[0].children[0].src,'assets/wood.webp',
+ 'Recording archive selection controls Music page independently of homepage');
 const musicVideoCard=ui.makeRecording(video);
 assert.equal(musicVideoCard.children[0].children[0].children[0].src,
  'https://i.ytimg.com/vi/zvHoJMJKBbY/hqdefault.jpg',

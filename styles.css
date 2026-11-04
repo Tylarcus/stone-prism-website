@@ -635,3 +635,27 @@ body.sp-audio-open .site{padding-bottom:152px}
  .sp-youtube-dialog-meta{align-items:flex-start;flex-direction:column;gap:8px}
  .sp-video-cover::before{width:44px;height:31px;border-radius:9px;font-size:14px}
 }
+
+
+/* CMS V3.6: independent homepage column defaults for phone, tablet, desktop.
+   These selectors intentionally follow earlier breakpoint-specific declarations. */
+.releases .release-grid[data-home-columns]{
+ grid-template-columns:repeat(var(--sp-home-columns,3),minmax(0,1fr));
+}
+.archive .archive-grid[data-home-columns]{
+ grid-template-columns:repeat(var(--sp-home-columns,4),minmax(0,1fr));
+}
+/* Keep existing visitor 1–5 choices for Music and full Visual Archive. */
+.grid-density-reset{
+ padding:6px 10px;min-height:32px;background:transparent;
+ border:1px solid #776d68;border-radius:2px;color:#ded0ba;
+ font:inherit;font-size:.69rem;letter-spacing:.025em;cursor:pointer;
+}
+.grid-density-reset:hover,.grid-density-reset:focus-visible{
+ color:#16120d;background:#c8d957;border-color:#c8d957;
+}
+@media(max-width:680px){
+ .releases .release-grid[data-home-columns]{gap:10px 7px}
+ .archive .archive-grid[data-home-columns]{gap:8px}
+ .grid-density-reset{font-size:.65rem;padding:5px 8px}
+}

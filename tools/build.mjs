@@ -60,6 +60,8 @@ for(const item of loadCollection('recordings')){
  recordings.push({slug:item.slug,title:String(item.title||'').trim().slice(0,200),kind:item.kind,
   release_type:String(item.release_type||'demo').slice(0,60),date:String(item.date||'').slice(0,30),
   description:String(item.description||'').slice(0,5000),artwork:normalizePath(item.artwork),
+  uploaded_artwork:normalizePath(item.artwork),artwork_visual:validSlug(item.artwork_visual)?item.artwork_visual:'',
+  artwork_custom:false,
   featured:!!item.featured,order:Number(item.order)||1000,tracks:filteredTracks});
 }
 recordings.sort((a,b)=>(Number(b.featured)-Number(a.featured))||(a.order-b.order)||(b.date||'').localeCompare(a.date||'')||a.title.localeCompare(b.title));
@@ -71,6 +73,33 @@ const visuals=loadCollection('visuals').filter(x=>x.published===true&&normalizeP
  featured_home:!!x.featured_home
 })).sort((a,b)=>a.order-b.order||a.title.localeCompare(b.title));
 for(const v of visuals){if(!ids.has(v.category)){ids.add(v.category);visualCategories.push({id:v.category,label:v.category.replace(/-/g,' ')})}}
+// Resolve the recording's optional Visual Archive art only after validating
+// that the chosen visual is published and has a safe image. Keep original intact.
+for(const rec of recordings){
+ const selected=visuals.find(v=>v.slug===rec.artwork_visual);
+ if(selected){
+  rec.artwork=selected.image;
+  rec.artwork_custom=true;
+ }
+}
+// CMS layout defaults are validated to 1–5 per breakpoint. These are site
+// defaults, not overrides of an individual visitor's stored grid preference.
+const layoutFallback={
+ homepage_music:{phone:2,tablet:3,desktop:3},
+ homepage_visuals:{phone:3,tablet:4,desktop:5},
+ music:{phone:3,tablet:3,desktop:4},
+ visuals:{phone:3,tablet:4,desktop:4}
+};
+const inputLayout=JSON.parse(fs.readFileSync(join('content/layout-defaults.json'),'utf8'));
+const layoutDefaults={};
+for(const [section,modes] of Object.entries(layoutFallback)){
+ layoutDefaults[section]={};
+ for(const [mode,fallback] of Object.entries(modes)){
+  const value=inputLayout?.[section]?.[mode];
+  const number=Number(value);
+  layoutDefaults[section][mode]=Number.isInteger(number)&&number>=1&&number<=5?number:fallback;
+ }
+}
 // Ordered homepage music cards edited in Pages CMS. Only published
 // recordings and published visuals are allowed into generated public data.
 const rawHomeMusic=JSON.parse(fs.readFileSync(join('content/home-music.json'),'utf8'));
@@ -90,6 +119,7 @@ for(const pick of rawHomeMusic){
  }else continue;
  homeMusic.push({
   kind,slug,
+  artwork_override:visuals.find(v=>v.slug===pick.artwork_visual_override)?.image||'',
   title:String(pick.title||'').slice(0,120).trim(),
   subtitle:String(pick.subtitle||'').slice(0,120).trim()
  });
@@ -110,7 +140,7 @@ for(const pick of rawHomeVisuals){
 }
 // Single-file Pages CMS editor for all general site copy and search metadata.
 const siteText=JSON.parse(fs.readFileSync(join('content/site-text.json'),'utf8'));
-const content={version:'2.8',recordings,visuals,visualCategories,siteText,homeMusic,homeVisuals};
+const content={version:'2.9',recordings,visuals,visualCategories,siteText,homeMusic,homeVisuals,layoutDefaults};
 fs.mkdirSync(join('data'),{recursive:true});
 const json=JSON.stringify(content).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
 fs.writeFileSync(join('data/site-content.js'),`/* Built from CMS content. Do not hand-edit. */\nwindow.STONE_PRISM_CONTENT=${json};\n`);

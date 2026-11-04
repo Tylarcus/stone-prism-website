@@ -68,14 +68,17 @@ function addCoverBadge(art,rec){
  const tag=el('span','sp-recording-cover-tag',formatBadge(rec));
  art.append(tag);
 }
-function makeReleaseArt(source,title,videoId){
+function makeReleaseArt(source,title,videoId,homepageOverride=''){
  const fallback=url(source.artwork||'');
- const imSrc=videoId?videoPoster(videoId):fallback;
+ // Homepage archive override > recording archive override > default YouTube poster
+ // > originally uploaded cover. Keep the YouTube PLAY action either way.
+ const chosen=url(homepageOverride)||(source.artwork_custom?fallback:'');
+ const imSrc=chosen||(videoId?videoPoster(videoId):fallback);
  const art=el('div','release-art');
  if(imSrc){
-  const im=el('img');im.src=imSrc;im.alt=(videoId?'YouTube video preview for ':'Cover artwork for ')+title;
+  const im=el('img');im.src=imSrc;im.alt=(videoId&&!chosen?'YouTube video preview for ':'Cover artwork for ')+title;
   im.loading='lazy';
-  if(videoId&&fallback)im.addEventListener('error',()=>{if(im.src!==new URL(fallback,location.href).href)im.src=fallback},{once:true});
+  if(videoId&&!chosen&&fallback)im.addEventListener('error',()=>{if(im.src!==new URL(fallback,location.href).href)im.src=fallback},{once:true});
   art.append(im);
  }else art.append(el('div','recording-cover-placeholder','SP'));
  if(videoId)art.classList.add('sp-video-cover');
@@ -157,12 +160,12 @@ function initHomepageMusic(){
   }
   let art;
   if(isRecording){
-   art=makeReleaseArt(source,title,videoId);
+   art=makeReleaseArt(source,title,videoId,pick.artwork_override);
    addCoverBadge(art,source);
   }else{
    art=el('div','release-art');
-   if(url(source.image)){
-    const img=el('img');img.src=url(source.image);img.alt=title+' artwork';img.loading='lazy';art.append(img);
+   if(url(pick.artwork_override)||url(source.image)){
+    const img=el('img');img.src=url(pick.artwork_override)||url(source.image);img.alt=title+' artwork';img.loading='lazy';art.append(img);
    }else art.append(el('div','recording-cover-placeholder','SP'));
   }
   const foot=el('div','release-foot'),copy=el('div');
@@ -360,6 +363,36 @@ function initRecording(){
 
 // V2.5: A per-page 1–5 column control, with independently remembered
 // phone / tablet / desktop choices. Works without localStorage as well.
+function layoutMode(){return window.innerWidth<=680?'phone':window.innerWidth<=980?'tablet':'desktop'}
+function layoutDefault(section){
+ const fallback={
+  homepage_music:{phone:2,tablet:3,desktop:3},
+  homepage_visuals:{phone:3,tablet:4,desktop:5},
+  music:{phone:3,tablet:3,desktop:4},
+  visuals:{phone:3,tablet:4,desktop:4}
+ };
+ const mode=layoutMode();
+ const configured=Number(data.layoutDefaults?.[section]?.[mode]);
+ return Number.isInteger(configured)&&configured>=1&&configured<=5?configured:fallback[section][mode];
+}
+// Home galleries have no per-visitor controls; CMS owns their responsive grid
+// defaults. Reapply after client-side page navigation and device rotation.
+function applyHomepageLayouts(){
+ const groups=[
+  ['homepage_music','.releases .release-grid'],
+  ['homepage_visuals','[data-cms-featured]']
+ ];
+ for(const [kind,selector] of groups){
+  const grid=$(selector);if(!grid)continue;
+  const count=layoutDefault(kind);
+  grid.style.setProperty('--sp-home-columns',String(count));
+  grid.dataset.homeColumns=String(count);
+ }
+ if(!window.STONE_PRISM_HOME_LAYOUT_RESIZE_BOUND){
+  window.STONE_PRISM_HOME_LAYOUT_RESIZE_BOUND=true;
+  window.addEventListener('resize',applyHomepageLayouts,{passive:true});
+ }
+}
 function initGridDensity(){
  const control=$('[data-grid-density]');if(!control)return;
  const kind=control.dataset.gridDensity;
@@ -368,8 +401,8 @@ function initGridDensity(){
  const buttons=[...control.querySelectorAll('[data-columns]')];
  const status=control.querySelector('.grid-density-current');
  const mem=window.STONE_PRISM_GRID_PREFS||(window.STONE_PRISM_GRID_PREFS={});
- const mode=()=>window.innerWidth<=680?'phone':window.innerWidth<=980?'tablet':'desktop';
- const defaultCount=()=>kind==='music'?(mode()==='desktop'?4:3):(mode()==='phone'?3:4);
+ const mode=layoutMode;
+ const defaultCount=()=>layoutDefault(kind);
  const storageKey=()=>`stoneprism:v25:columns:${kind}:${mode()}`;
  const getSaved=()=>{
   const key=storageKey();let value=mem[key];
@@ -393,6 +426,16 @@ function initGridDensity(){
   try{window.localStorage.setItem(key,String(n))}catch(_){/* Some content:// viewers deny storage. */}
   apply(n);
  }));
+ // A visitor choice wins over the CMS default until this one-click reset.
+ const reset=el('button','grid-density-reset','Reset to site default');
+ reset.type='button';
+ reset.addEventListener('click',()=>{
+  const key=storageKey();
+  delete mem[key];
+  try{window.localStorage.removeItem(key)}catch(_){}
+  apply(defaultCount());
+ });
+ control.append(reset);
  sync(true);
  // The responsive zoom breakpoint can change without a full page load.
  // A persistent listener is installed only once, and always targets the
@@ -407,7 +450,7 @@ function initGridDensity(){
  control._spGridSync=()=>sync();
 }
 
-function initPage(){initSiteText();initNavigation();initDialog();initHomepageMusic();initVisuals();initMusic();initRecording();initGridDensity()}
+function initPage(){initSiteText();initNavigation();initDialog();initHomepageMusic();initVisuals();initMusic();initRecording();applyHomepageLayouts();initGridDensity()}
 window.STONE_PRISM_APP={init:initPage,stopAudio:()=>window.STONE_PRISM_PLAYER?.stop()};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initPage);else initPage();
 })();
