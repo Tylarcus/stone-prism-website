@@ -41,15 +41,20 @@ jobs:
           node tools/test-cache-bust.mjs
           node tools/test-player-v3.mjs
           python3 tools/test_waveforms.py
-      - name: Check FFmpeg (avoid slow package updates)
+      - name: Cache portable FFmpeg for waveform generation
+        uses: actions/cache@v4
+        with:
+          path: .wave-tools
+          key: stoneprism-imageio-ffmpeg-0.8.1-${{ runner.os }}-${{ runner.arch }}
+      - name: Prepare waveform decoder without system package installation
         run: |
           if command -v ffmpeg >/dev/null 2>&1; then
-            echo "Using FFmpeg already available on the GitHub runner"
-            ffmpeg -version | head -n 1
+            echo "Using the system FFmpeg binary"
+          elif [ -d ".wave-tools/imageio_ffmpeg" ]; then
+            echo "Using previously cached portable FFmpeg"
           else
-            echo "FFmpeg missing; attempting a time-limited install"
-            timeout 90s sudo apt-get update -qq
-            timeout 90s sudo apt-get install -y -qq ffmpeg
+            echo "Attempting pinned portable FFmpeg wheel, without apt-get"
+            timeout 100s python3 -m pip install --target .wave-tools --disable-pip-version-check --only-binary=:all: -q imageio-ffmpeg==0.8.1 || echo "::warning::Waveform tool unavailable; website publishing will continue"
           fi
       - name: Generate lightweight static waveform peaks from R2 MP3s
         run: python3 tools/build_waveforms.py
