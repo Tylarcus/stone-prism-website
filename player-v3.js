@@ -306,6 +306,7 @@ async function navigate(destination,push){
   const currentSite=$('.site'),currentDialog=$('#artDialog');
   if(!nextSite||!currentSite||!nextDialog||!currentDialog)throw Error('Unsupported page');
   if(id!==navigationId)return;
+  window.STONE_PRISM_VIDEO?.close();
   if(push)history.pushState({spPage:true},'',destination.href);
   currentSite.replaceWith(document.importNode(nextSite,true));
   currentDialog.replaceWith(document.importNode(nextDialog,true));
