@@ -4,14 +4,14 @@
   "kind": "demo",
   "release_type": "demo",
   "status": "published",
+  "date": "2017-11-01",
   "description": "Website-exclusive Stone Prism recording.",
   "artwork": "assets/angel.webp",
-  "featured": false,
+  "featured": true,
   "tracks": [
     {
       "title": "Angel",
       "audio_url": "https://pub-720b5cbc80aa4d2a87d7b34a063dfe6f.r2.dev/Angel%20%5B%23%5D.mp3",
-      "youtube_url": "",
       "notes": "Website-exclusive audio stream."
     }
   ]
