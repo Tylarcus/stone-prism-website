@@ -7,6 +7,7 @@ class Node {
   this.tagName=tag.toUpperCase();this.className='';this.children=[];
   this.dataset={};this.attributes={};this.style={};this.listeners={};
   this.hidden=false;this.open=false;this.textContent='';this.id='';
+  this.classList={add:name=>{this.className+=' '+name},remove:name=>{this.className=this.className.split(' ').filter(x=>x!==name).join(' ')}};
  }
  append(...children){this.children.push(...children)}
  replaceChildren(...children){this.children=[...children]}
