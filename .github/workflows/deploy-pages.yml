@@ -34,7 +34,7 @@ jobs:
       - name: Stage only public website files
         run: |
           mkdir -p _site
-          cp index.html music.html visuals.html recording.html styles.css script.js _site/
+          cp index.html music.html visuals.html recording.html styles.css script.js player-v3.js _site/
           cp -R assets data _site/
           if [ -d media ]; then cp -R media _site/; fi
           touch _site/.nojekyll
