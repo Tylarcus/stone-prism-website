@@ -32,10 +32,16 @@ jobs:
           node tools/test-music.mjs
           node tools/test-player-v3.mjs
           python3 tools/test_waveforms.py
-      - name: Install FFmpeg for offline waveform preprocessing
+      - name: Check FFmpeg (avoid slow package updates)
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg
+          if command -v ffmpeg >/dev/null 2>&1; then
+            echo "Using FFmpeg already available on the GitHub runner"
+            ffmpeg -version | head -n 1
+          else
+            echo "FFmpeg missing; attempting a time-limited install"
+            timeout 90s sudo apt-get update -qq
+            timeout 90s sudo apt-get install -y -qq ffmpeg
+          fi
       - name: Generate lightweight static waveform peaks from R2 MP3s
         run: python3 tools/build_waveforms.py
       - name: Stage only public website files
