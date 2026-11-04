@@ -1,0 +1,164 @@
+# Stone Prism — V2.3. Commit this file at the repository root.
+# Pages CMS edits metadata; the site is generated from published entries.
+media:
+  - name: artwork
+    label: Artwork uploads
+    input: media/images
+    output: /media/images
+    categories: [image]
+    rename: safe
+content:
+  - name: recordings
+    label: Music / Official releases & demos
+    type: collection
+    path: content/recordings
+    format: json
+    filename: "{fields.slug}.json"
+    view:
+      primary: title
+      fields: [title, kind, release_type, status, date]
+      sort: [title, date]
+      default:
+        sort: date
+        order: desc
+    fields:
+      - name: title
+        label: Recording title
+        type: string
+        required: true
+      - name: slug
+        label: Unique URL slug
+        type: string
+        required: true
+        pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        description: e.g. midnight-demo-01 — do not reuse a slug
+      - name: kind
+        label: Library category
+        type: select
+        required: true
+        options:
+          values:
+            - name: official
+              label: Official release
+            - name: demo
+              label: Website-exclusive demo
+      - name: release_type
+        label: Format
+        type: select
+        required: true
+        options:
+          values:
+            - name: single
+              label: Single
+            - name: ep
+              label: EP
+            - name: album
+              label: Album
+            - name: demo
+              label: Demo
+            - name: collection
+              label: Collection
+      - name: status
+        label: Publishing status
+        type: select
+        required: true
+        options:
+          values:
+            - name: draft
+              label: Draft — hidden from site
+            - name: published
+              label: Published — visible on site
+      - name: date
+        label: Recording / release date
+        type: date
+      - name: description
+        label: Description and liner notes
+        type: text
+      - name: artwork
+        label: Cover art
+        type: image
+        options:
+          media: artwork
+      - name: featured
+        label: Featured near top
+        type: boolean
+      - name: order
+        label: Display order (smaller first)
+        type: number
+      - name: tracks
+        label: Track list
+        type: object
+        list:
+          collapsible:
+            collapsed: true
+            summary: "{title}"
+        fields:
+          - name: title
+            label: Track title
+            type: string
+            required: true
+          - name: audio_url
+            label: Streaming audio URL (HTTPS preferred)
+            type: string
+            description: Paste a hosted audio URL; do not add a download link.
+          - name: notes
+            label: Track notes
+            type: text
+  - name: visuals
+    label: Visual Archive
+    type: collection
+    path: content/visuals
+    format: json
+    filename: "{fields.slug}.json"
+    view:
+      primary: title
+      fields: [title, category, published, order]
+      sort: [order, title]
+    fields:
+      - name: title
+        label: Artwork title
+        type: string
+        required: true
+      - name: slug
+        label: Unique filename slug
+        type: string
+        required: true
+        pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      - name: description
+        label: Caption / description
+        type: text
+      - name: image
+        label: Image
+        type: image
+        options:
+          media: artwork
+      - name: category
+        label: Category ID
+        type: string
+        required: true
+        description: Match an ID from Visual Categories (e.g. collage)
+      - name: published
+        label: Show on website
+        type: boolean
+      - name: featured_home
+        label: Show on homepage (first five by order)
+        type: boolean
+      - name: order
+        label: Display order
+        type: number
+  - name: visual_categories
+    label: Visual Categories / Filters
+    type: file
+    path: content/visual-categories.json
+    format: json
+    list: true
+    fields:
+      - name: id
+        label: Category ID (lowercase, no spaces)
+        type: string
+        required: true
+        pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      - name: label
+        label: Category label visitors see
+        type: string
+        required: true
