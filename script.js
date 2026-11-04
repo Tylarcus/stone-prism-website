@@ -10,6 +10,49 @@ const attr=(node,props)=>{for(const [k,v] of Object.entries(props))node.setAttri
 const url=src=>typeof src==='string'&&/^(https?:\/\/|assets\/|media\/|audio\/)/i.test(src)?(window.STONE_PRISM_PREVIEW_ASSETS?.[src]||src):'';
 const recordingLink=slug=>`recording.html?slug=${encodeURIComponent(slug)}`;
 const prettyType=rec=>rec.kind==='demo'?'Website-exclusive demo':({single:'Single',ep:'EP',album:'Album',collection:'Collection',demo:'Demo'}[rec.release_type]||'Official release');
+// Website-wide text and contact info from the Pages CMS JSON file.
+// textContent (never innerHTML) prevents CMS-provided text from injecting markup.
+function cmsText(path){
+ let value=data.siteText;
+ for(const part of path.split('.')){
+  if(!value||typeof value!=='object'||!Object.prototype.hasOwnProperty.call(value,part))return null;
+  value=value[part];
+ }
+ return typeof value==='string'?value:null;
+}
+function initSiteText(){
+ document.querySelectorAll('[data-cms-text]').forEach(node=>{
+  const value=cmsText(node.dataset.cmsText||'');
+  if(value!==null)node.textContent=value;
+ });
+ const page=document.body.dataset.cmsPage;
+ if(page){
+  const title=cmsText('seo.'+page+'.title'),description=cmsText('seo.'+page+'.description');
+  if(title)document.title=title;
+  const meta=document.querySelector('meta[name="description"]');
+  if(meta&&description!==null)meta.setAttribute('content',description);
+ }
+ const contact=data.siteText?.contact||{};
+ const links=[];
+ const email=typeof contact.email==='string'?contact.email.trim():'';
+ if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))links.push(['Email','mailto:'+encodeURIComponent(email)]);
+ for(const [key,label] of [['instagram','Instagram'],['youtube','YouTube'],['bandcamp','Bandcamp']]){
+  const raw=contact[key];if(typeof raw!=='string'||!raw.trim())continue;
+  try{const dest=new URL(raw.trim());if(dest.protocol==='https:')links.push([label,dest.href])}catch(_){/* Ignore invalid URLs. */}
+ }
+ document.querySelectorAll('.footer-message').forEach(footer=>{
+  let holder=footer.querySelector('.cms-contact-links');
+  if(holder)holder.remove();
+  if(!links.length)return;
+  holder=el('div','cms-contact-links');
+  for(const [label,href] of links){
+   const anchor=el('a','',label);anchor.href=href;
+   if(!href.startsWith('mailto:')){anchor.target='_blank';anchor.rel='noopener noreferrer'}
+   holder.append(anchor);
+  }
+  footer.append(holder);
+ });
+}
 function initNavigation(){
  const nav=$('#mainNav'),menu=$('#menuBtn');if(!nav||!menu)return;
  menu.onclick=()=>{const o=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(o))};
@@ -79,7 +122,7 @@ function initMusic(){
  function render(){
   const visible=data.recordings.filter(x=>activeFilter==='all'||x.kind===activeFilter);
   grid.replaceChildren(...visible.map(makeRecording));
-  empty.textContent=visible.length?'':activeFilter==='demo'?'No website-exclusive demos are published yet.':activeFilter==='official'?'No official releases have been published here yet.':'No recordings have been published yet. The original artwork remains below.';
+  empty.textContent=visible.length?'':activeFilter==='demo'?(cmsText('music.empty_demo')??'No website-exclusive demos are published yet.'):activeFilter==='official'?(cmsText('music.empty_official')??'No official releases have been published here yet.'):(cmsText('music.empty_all')??'No recordings have been published yet. The original artwork remains below.');
   empty.hidden=visible.length>0;
   buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.musicFilter===activeFilter)));
  }
@@ -181,7 +224,7 @@ function initGridDensity(){
  control._spGridSync=()=>sync();
 }
 
-function initPage(){initNavigation();initDialog();initVisuals();initMusic();initRecording();initGridDensity()}
+function initPage(){initSiteText();initNavigation();initDialog();initVisuals();initMusic();initRecording();initGridDensity()}
 window.STONE_PRISM_APP={init:initPage,stopAudio};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initPage);else initPage();
 })();
