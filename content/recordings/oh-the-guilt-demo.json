@@ -1,0 +1,15 @@
+{
+  "title": "Oh the Guilt [Demo]",
+  "slug": "oh-the-guilt-demo",
+  "kind": "demo",
+  "release_type": "demo",
+  "status": "published",
+  "date": "2017-11-01",
+  "featured": true,
+  "tracks": [
+    {
+      "title": "Oh the Guilt",
+      "audio_url": "https://pub-720b5cbc80aa4d2a87d7b34a063dfe6f.r2.dev/Demo%20Album/Oh%20The%20Guilt%20%5B%23%5D.mp3"
+    }
+  ]
+}
