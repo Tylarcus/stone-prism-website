@@ -167,7 +167,7 @@ function initHomepageMusic(){
   }
   const foot=el('div','release-foot'),copy=el('div');
   copy.append(el('div','release-name',title),el('div','release-sub',subtitle));
-  const action=el('span','play-circle'+((playable||videoId)?' sp-home-play':''),(playable||videoId)?'▶':'↗');
+  const action=el('span','play-circle'+(videoId?' sp-youtube-play':playable?' sp-home-play':''),(playable||videoId)?'▶':'↗');
   action.setAttribute('aria-hidden','true');
   foot.append(copy,action);link.append(art,foot);items.push(link);
  }
@@ -261,7 +261,7 @@ function makeRecording(rec){
  copy.append(el('div','release-name',rec.title));
  const caption=(rec.description||'').trim();
  if(caption)copy.append(el('div','release-sub',caption));
- const circle=el('span','play-circle'+((canPlay||videoId)?' sp-home-play':''),(canPlay||videoId)?'▶':'↗');
+ const circle=el('span','play-circle'+(videoId?' sp-youtube-play':canPlay?' sp-home-play':''),(canPlay||videoId)?'▶':'↗');
  circle.setAttribute('aria-hidden','true');
  foot.append(copy,circle);
  hit.append(art,foot);row.append(hit);
