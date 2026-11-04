@@ -384,7 +384,12 @@ function applyHomepageLayouts(){
  ];
  for(const [kind,selector] of groups){
   const grid=$(selector);if(!grid)continue;
-  const count=layoutDefault(kind);
+  const requested=layoutDefault(kind);
+  // A 4-column setting with only 3 published cards must not leave an empty
+  // fourth slot that shrinks the art and causes excessive text wrapping.
+  // Treat a CMS column setting as the maximum number of cards per row.
+  const visible=[...grid.children].filter(item=>!item.hidden).length;
+  const count=visible>0?Math.min(requested,visible):requested;
   grid.style.setProperty('--sp-home-columns',String(count));
   grid.dataset.homeColumns=String(count);
  }
