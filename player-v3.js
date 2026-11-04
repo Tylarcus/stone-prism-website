@@ -25,6 +25,8 @@ function playbackState(){
  document.body.classList.toggle('sp-audio-playing',playing);
  if(ui.play){ui.play.textContent=playing?'❚❚':'▶';ui.play.setAttribute('aria-label',playing?'Pause':'Play')}
  if('mediaSession' in navigator)navigator.mediaSession.playbackState=playing?'playing':'paused';
+ // A previously blocked reload must never keep warning after user presses Play.
+ if(playing)setStatus('');
  saveState(true);
 }
 function updatePosition(){
@@ -45,7 +47,15 @@ function updateTrackUI(){
  if(ui.title)ui.title.textContent=item.track.title;
  if(ui.album)ui.album.textContent=item.record.title+' / STONE PRISM';
  if(ui.image){ui.image.src=artwork(item);ui.image.alt=item.record.title+' artwork'}
- if(ui.details)ui.details.href='recording.html?slug='+encodeURIComponent(item.record.slug);
+ if(ui.details){
+  ui.details.href='recording.html?slug='+encodeURIComponent(item.record.slug);
+  const type=item.record.kind==='demo'?'Demo':({
+   single:'Single',ep:'EP',album:'Album',collection:'Collection'
+  }[item.record.release_type]||'Recording');
+  const year=/^\d{4}/.test(item.record.date||'')?item.record.date.slice(0,4):'';
+  ui.details.textContent=type+(year?' · '+year:'')+' ↗';
+  ui.details.setAttribute('aria-label','Open '+item.record.title+' recording details');
+ }
  if(ui.prev)ui.prev.disabled=current<=0;
  if(ui.next)ui.next.disabled=current>=tracks.length-1;
  document.body.classList.add('sp-audio-open');
@@ -92,9 +102,11 @@ function restoreState(){
   // an explicit Play control instead of pretending music is still playing.
   const attempt=element.play();
   if(attempt&&typeof attempt.catch==='function')attempt.catch(()=>{
-   setStatus('Paused after reload — tap Play to continue.');
+   // Mobile browsers may block autoplay after refresh. The Play icon tells
+   // visitors how to resume without a stale warning occupying dock space.
+   if(element.paused)setStatus('');
   });
- }else setStatus('Ready to resume.');
+ }else setStatus('');
 }
 // A waveform is visual data, NOT a sound processor. Peaks are generated at
 // publish time by ffmpeg, so the visitor streams the MP3 only once.
@@ -199,7 +211,7 @@ function makeDock(){
  const meta=make('div','sp-jukebox-meta');
  const title=make('strong','sp-jukebox-title','');
  const album=make('span','sp-jukebox-album','');
- const details=make('a','sp-jukebox-details','Details ↗');
+ const details=make('a','sp-jukebox-details','Recording ↗');
  meta.append(title,album,details);
  const prev=make('button','sp-jukebox-button','⏮'),playButton=make('button','sp-jukebox-button sp-jukebox-play','▶');
  const nextButton=make('button','sp-jukebox-button','⏭');
