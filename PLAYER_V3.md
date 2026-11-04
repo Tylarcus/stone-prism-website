@@ -11,10 +11,11 @@ visitors listen, not how the site is administered.
 - A subtle **Track details** link still opens liner notes and the track list.
 - On recording detail pages, Play starts the relevant track directly in the dock.
 - The dock shows cover art, song title, play/pause, previous/next, song duration,
-  an interactive WaveSurfer audio waveform and a colored animated spectrum.
-- The waveform is an actual timeline of the recording, not a moving EQ.
-  The spectrum bars use Web Audio AnalyserNode when available and have a
-  graceful CSS animation fallback.
+  an expanded, muted real-time vertical frequency analyzer and a seek slider.
+- The old waveform has been removed; its extra full-file download/decode could
+  compete with streaming on a mobile connection. The new full-width frequency
+  bars read one playing audio stream through Web Audio AnalyserNode.
+  The seek slider below the bars remains interactive.
 - Tracks in the published recording library with direct audio URLs form a
   playlist. After a track ends, the next direct-audio track starts automatically.
   Video-only entries are intentionally excluded from this audio playlist.
@@ -29,6 +30,10 @@ and swaps only the .site and artwork dialog while retaining the dock's Audio
 object outside .site. Browser Back/Forward uses History API popstate. A failed
 fetch falls back to normal browser navigation (which stops the audio).
 
+A refresh destroys the original audio context; the player now remembers the
+song and playhead in sessionStorage for up to 15 minutes, then attempts to
+resume when the page reloads. Mobile autoplay restrictions may prevent
+immediate sound after refreshing, in which case tap Play on the restored dock.
 Tab closure still stops music. Android Chrome may expose browser/system
 media controls using the Media Session API, including title, artwork, pause,
 next/previous and seeking. Push notifications cannot keep a closed web tab
@@ -43,8 +48,7 @@ field in Pages CMS. Set the recording to Published to show it in the library.
 Recording cards start the first available audio track. Album detail pages
 allow choosing a particular track with a single Play click.
 
-The audio object URL must allow CORS from the website for the WaveSurfer
-visualization and the Web Audio analyser. See `R2_CORS_POLICY.json` in the repo.
+The audio object URL must allow CORS from the website for the Web Audio analyzer. See `R2_CORS_POLICY.json` in the repo.
 For non-CORS audio, the browser may reject playback when the analyser requests
 cross-origin audio. Test new audio sources in Chrome on Android.
 
@@ -61,3 +65,12 @@ After deployment, exercise the actual Android site:
 3. Pause, resume, seek in waveform, close player and reopen.
 4. Check phone media controls while backgrounded, but do not assume support.
 5. When there are 2+ direct audio tracks, verify automatic next-track.
+
+## Checking distorted or interrupted audio
+
+R2's r2.dev access is intended for development and may throttle throughput.
+The old V3 player also fetched and decoded each MP3 twice, which this version
+avoids. If Angel still sounds crumbly, compare its full MP3 URL in the browser
+against the Stone Prism dock. If both are distorted, inspect the source MP3
+and encoding (e.g., a standard 192–256 kbps MP3), not the visualizer styling.
+If only the dock is distorted, investigate Web Audio routing/browser support.
