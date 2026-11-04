@@ -24,6 +24,13 @@ class FakeAudio{
  removeAttribute(name){if(name==='src')this.src=''}
  emit(type){this.events[type]?.()}
 }
+const stored=new Map();
+const sessionStorage={
+ setItem(key,value){stored.set(key,value)},
+ getItem(key){return stored.get(key)??null},
+ removeItem(key){stored.delete(key)}
+};
+
 const docEvents={},winEvents={};
 const document={
  readyState:'loading',
@@ -43,7 +50,7 @@ const window={
 };
 const sandbox={
  window,document,history,navigator:{},location:{href:'https://stoneprism.music/music.html',pathname:'/music.html',search:'',origin:'https://stoneprism.music'},
- Audio:FakeAudio,URL,Uint8Array,
+ Audio:FakeAudio,URL,Uint8Array,sessionStorage,
  requestAnimationFrame:()=>42,cancelAnimationFrame:()=>{},
  Promise,console
 };
@@ -66,4 +73,25 @@ player.playTrack('first',1);
 assert.equal(audio.playCalls,3,'A tap on the current paused song resumes playback');
 player.stop();
 assert.equal(audio.src,'','Close stops and unloads the audio');
-console.log('Player V3: one-tap playback, video separation, queue advance and pause/stop passed.');
+assert.equal(stored.size,0,'Close removes the saved playback session');
+player.playTrack('first',0);
+audio.currentTime=46.2;
+audio.events.timeupdate?.();
+const resume=JSON.parse(sessionStorage.getItem('stoneprism:jukebox:resume-v1'));
+assert.equal(resume.slug,'first','Current song is saved for reload');
+assert.equal(resume.index,0);
+assert.equal(resume.playing,true);
+assert.equal(resume.position,46.2);
+const code=fs.readFileSync('player-v3.js','utf8');
+assert.ok(!/WaveSurfer\.create|loadWaveSurfer|drawWave/.test(code),'No second MP3 download for waveform rendering');
+assert.match(code,/createAnalyser\(/,'A real-time analyser is used for the vertical spectrum');
+const newEvents={};
+const refreshedDocument={...document,addEventListener:(event,handler)=>{newEvents[event]=handler}};
+const refreshedWindow={...window,STONE_PRISM_PLAYER:undefined};
+const refreshedSandbox={...sandbox,document:refreshedDocument,window:refreshedWindow};
+vm.runInNewContext(code,refreshedSandbox);
+newEvents.DOMContentLoaded?.();
+assert.equal(elements.length,2,'Reload creates a new audio element');
+assert.equal(elements[1].src,'https://example.net/one.mp3','Reload restores the saved song');
+assert.equal(elements[1].playCalls,1,'Reload attempts to resume when browser permits autoplay');
+console.log('Player V3.1: one-tap, auto-advance, reload recovery, real-time spectrum and one-stream checks passed.');
