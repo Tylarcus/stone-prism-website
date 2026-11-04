@@ -1,17 +1,16 @@
 [
   {
+    "recording": "i-need-you-live-acoustic",
+    "hidden": false
+  },
+  {
     "recording": "angel-demo",
     "subtitle": "Website-exclusive demo",
     "hidden": false
   },
   {
-    "recording": "i-need-you-live-acoustic",
-    "hidden": false
-  },
-  {
+    "recording": "oh-the-guilt-demo",
     "visual": "teeth-concept",
-    "title": "Teeth / Archive",
-    "subtitle": "Concept artwork",
     "hidden": false
   }
 ]
