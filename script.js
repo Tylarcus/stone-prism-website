@@ -3,7 +3,6 @@
 'use strict';
 const data=window.STONE_PRISM_CONTENT||{recordings:[],visuals:[],visualCategories:[]};
 let activeFilter='all', visualFilter='all';
-let audio=null, waveInstance=null, playingSlug='',playingTrack=-1;
 const $=sel=>document.querySelector(sel);
 const el=(name,classes,text)=>{const node=document.createElement(name);if(classes)node.className=classes;if(text!==undefined)node.textContent=String(text);return node};
 const attr=(node,props)=>{for(const [k,v] of Object.entries(props))node.setAttribute(k,String(v));return node};
@@ -111,10 +110,22 @@ function cover(src,title){const box=el('div','release-art');const safe=url(src);
  else box.append(el('div','recording-cover-placeholder','SP'));
  return box}
 function makeRecording(rec){
- const a=el('a','recording-card');a.href=recordingLink(rec.slug);a.append(cover(rec.artwork,rec.title));
- a.append(el('span','recording-card-tag',prettyType(rec)),el('h3','',rec.title));
- if(rec.description)a.append(el('p','',rec.description.length>145?rec.description.slice(0,144)+'…':rec.description));
- a.append(el('span','view-art','Listen / Details ↗'));return a;
+ const row=el('article','recording-card');
+ const available=(rec.tracks||[]).findIndex(t=>typeof t.audio_url==='string'&&t.audio_url.trim()&&!/(?:youtube\.com|youtu\.be)\//i.test(t.audio_url));
+ const canPlay=available!==-1;
+ const hit=el(canPlay?'button':'a','sp-recording-hit');
+ if(canPlay){
+  hit.type='button';
+  hit.setAttribute('aria-label','Play '+rec.title+' on Stone Prism');
+  hit.onclick=()=>window.STONE_PRISM_PLAYER?.playTrack(rec.slug,available);
+ }else {hit.href=recordingLink(rec.slug);hit.setAttribute('aria-label','View '+rec.title)}
+ hit.append(cover(rec.artwork,rec.title));
+ hit.append(el('span','recording-card-tag',prettyType(rec)),el('h3','',rec.title));
+ if(rec.description)hit.append(el('p','',rec.description.length>145?rec.description.slice(0,144)+'…':rec.description));
+ row.append(hit);
+ const details=el('a','sp-recording-details',canPlay?'Track details ↗':'Watch / Details ↗');
+ details.href=recordingLink(rec.slug);row.append(details);
+ return row;
 }
 function initMusic(){
  const grid=$('#recordingsGrid'),empty=$('#recordingsEmpty');if(!grid||!empty)return;
@@ -128,149 +139,55 @@ function initMusic(){
  }
  buttons.forEach(b=>b.onclick=()=>{activeFilter=b.dataset.musicFilter;render()});render();
 }
-function formatTime(s){return Number.isFinite(s)&&s>=0?Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'):'0:00'}
 function youtubeVideoId(raw){
  if(typeof raw!=='string')return '';
  try{
-  const u=new URL(raw);if(u.protocol!=='https:')return '';
+  const u=new URL(raw);
+  if(u.protocol!=='https:')return '';
   const host=u.hostname.toLowerCase();let id='';
   if(host==='youtu.be'||host==='www.youtu.be')id=u.pathname.split('/')[1]||'';
   else if(['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com','youtube-nocookie.com','www.youtube-nocookie.com'].includes(host)){
    if(u.pathname==='/watch')id=u.searchParams.get('v')||'';
-   else {const m=u.pathname.match(/^\/(?:embed|shorts|live)\/([^/]+)/);id=m?m[1]:''}
+   else {const match=u.pathname.match(/^\/(?:embed|shorts|live)\/([^/]+)/);id=match?match[1]:''}
   }
   return /^[A-Za-z0-9_-]{11}$/.test(id)?id:'';
  }catch(_){return ''}
 }
-const audioSource=t=>t&&url(t.audio_url)&&!youtubeVideoId(t.audio_url)?url(t.audio_url):'';
-let waveformLibrary=null;
-function loadWaveform(){
- if(window.WaveSurfer)return Promise.resolve(window.WaveSurfer);
- if(!waveformLibrary)waveformLibrary=new Promise((resolve,reject)=>{
-  const script=el('script');script.async=true;
-  script.src='https://cdn.jsdelivr.net/npm/wavesurfer.js@7.12.12/dist/wavesurfer.min.js';
-  script.onload=()=>window.WaveSurfer?resolve(window.WaveSurfer):reject(new Error('Waveform library unavailable'));
-  script.onerror=()=>reject(new Error('Waveform library could not load'));
-  document.head.append(script);
- });
- return waveformLibrary;
-}
-function stopAudio(){
- if(waveInstance){const old=waveInstance;waveInstance=null;try{old.destroy()}catch(_){}}
- if(audio){const old=audio;audio=null;old.pause();old.removeAttribute('src');old.load()}
- playingTrack=-1;playingSlug='';
-}
 function createDetail(rec){
  const root=$('#recordingDetail');root.replaceChildren();
  const coverBox=el('div','detail-cover');
- if(url(rec.artwork)){const img=el('img');attr(img,{src:url(rec.artwork),alt:rec.title+' cover artwork'});coverBox.append(img)}
- else coverBox.append(el('div','recording-cover-placeholder','SP'));
- const content=el('div','detail-info');content.append(el('p','detail-type',prettyType(rec)),el('h2','detail-title',rec.title));
+ if(url(rec.artwork)){
+  const image=el('img');attr(image,{src:url(rec.artwork),alt:rec.title+' cover artwork'});coverBox.append(image);
+ }else coverBox.append(el('div','recording-cover-placeholder','SP'));
+ const content=el('div','detail-info');
+ content.append(el('p','detail-type',prettyType(rec)),el('h2','detail-title',rec.title));
  if(rec.date)content.append(el('p','detail-type',rec.date));
  if(rec.description)content.append(el('p','detail-notes',rec.description));
  const tracks=Array.isArray(rec.tracks)?rec.tracks:[];
  const list=el('ol','track-list');
  if(!tracks.length)content.append(el('p','library-empty','Tracks will appear when this recording is ready.'));
-
- const player=el('section','stream-player sp-player');player.id='streamPlayer';player.hidden=true;
- player.setAttribute('aria-label','Stone Prism audio player');
- const now=el('p','player-now',''),badge=el('span','sp-player-badge','STONE PRISM / AUDIO');
- const header=el('div','sp-player-header');header.append(now,badge);
- const controls=el('div','player-controls sp-controls');
- const play=el('button','player-play','Play');play.type='button';play.setAttribute('aria-label','Play or pause recording');
- const meter=el('div','player-meter');meter.setAttribute('aria-hidden','true');
- for(let n=0;n<5;n++)meter.append(el('span'));
- const wave=el('div','player-wave');wave.hidden=true;wave.setAttribute('aria-label','Seekable audio waveform');
- const seek=el('input','player-seek');seek.type='range';seek.min='0';seek.max='1000';seek.value='0';
- seek.hidden=true;seek.setAttribute('aria-label','Seek within the track');
- const timeline=el('div','sp-timeline');timeline.append(wave,seek);
- const time=el('span','player-time','0:00 / 0:00');
- const message=el('p','player-message','');message.setAttribute('role','status');
- controls.append(play,meter,timeline,time);player.append(header,controls,message);
-
  const video=el('section','sp-video-panel');video.hidden=true;
  const videoTitle=el('p','sp-video-heading','WATCH / STONE PRISM');
  const videoScreen=el('div','sp-video-embed');
- const videoFooter=el('div','sp-video-footer'),closeVideo=el('button','sp-video-close','Close video');
- closeVideo.type='button';videoFooter.append(closeVideo);
- video.append(videoTitle,videoScreen,videoFooter);
- const clearVideo=()=>{videoScreen.replaceChildren();video.hidden=true};
- closeVideo.onclick=clearVideo;
- let token=0,ready=false;
- function update(){
-  const active=waveInstance?waveInstance.isPlaying():!!audio&&!audio.paused;
-  const current=waveInstance?waveInstance.getCurrentTime():audio?audio.currentTime||0:0;
-  const total=waveInstance?waveInstance.getDuration():audio&&Number.isFinite(audio.duration)?audio.duration:0;
-  play.textContent=active?'Pause':'Play';meter.classList.toggle('is-playing',active);
-  time.textContent=formatTime(current)+' / '+formatTime(total);
-  if(!waveInstance)seek.value=total?String(Math.round(current/total*1000)):'0';
-  list.querySelectorAll('.track-play').forEach(b=>{
-   const selected=playingSlug===rec.slug&&b.dataset.trackIndex===String(playingTrack);
-   b.textContent=selected&&active?'Playing':'Play';b.setAttribute('aria-current',selected?'true':'false');
-  });
- }
- function advance(){
-  const next=tracks.findIndex((t,i)=>i>playingTrack&&audioSource(t));
-  if(next>=0)selectTrack(next);else {message.textContent='Playback finished.';update()}
- }
- function nativeFallback(source,selectToken,reason){
-  if(selectToken!==token)return;
-  if(waveInstance){const old=waveInstance;waveInstance=null;try{old.destroy()}catch(_){}}
-  wave.hidden=true;wave.replaceChildren();seek.hidden=false;ready=false;
-  audio=new Audio();audio.preload='metadata';audio.src=source;
-  const current=audio;
-  ['timeupdate','loadedmetadata','play','pause'].forEach(event=>current.addEventListener(event,()=>{if(audio===current)update()}));
-  current.addEventListener('ended',()=>{if(audio===current)advance()});
-  current.addEventListener('error',()=>{if(audio===current)message.textContent='Audio could not load. Check the full R2 object URL and file type.'});
-  message.textContent=reason||'Streaming on Stone Prism.';
-  current.play().catch(()=>{if(audio===current)message.textContent='Tap Play to start this recording.'});
-  update();
- }
- function selectTrack(index){
-  const t=tracks[index],source=audioSource(t);if(!source)return;
-  const selectToken=++token;clearVideo();stopAudio();playingSlug=rec.slug;playingTrack=index;ready=false;
-  now.textContent=t.title;player.hidden=false;wave.hidden=true;seek.hidden=true;
-  wave.replaceChildren();time.textContent='0:00 / 0:00';message.textContent='Loading your recording…';update();
-  loadWaveform().then(WaveSurfer=>{
-   if(selectToken!==token)return;
-   try{
-    const ctx=el('canvas').getContext('2d');let progress='#b9e849';
-    if(ctx){
-     const gradient=ctx.createLinearGradient(0,0,480,0);
-     gradient.addColorStop(0,'#b9e849');gradient.addColorStop(.32,'#e4a34a');
-     gradient.addColorStop(.64,'#d76054');gradient.addColorStop(1,'#a078be');
-     progress=gradient;
-    }
-    wave.hidden=false;seek.hidden=true;
-    const instance=WaveSurfer.create({container:wave,url:source,
-     waveColor:'#766579',progressColor:progress,cursorColor:'#f2e7d5',cursorWidth:1,
-     height:66,barWidth:2,barGap:2,barRadius:2,normalize:true,interact:true});
-    waveInstance=instance;
-    instance.on('ready',()=>{
-     if(waveInstance!==instance||selectToken!==token)return;
-     ready=true;message.textContent='Streaming on Stone Prism.';update();
-     instance.play().catch(()=>{if(waveInstance===instance)message.textContent='Tap Play to start this recording.'});
-    });
-    ['timeupdate','play','pause'].forEach(event=>instance.on(event,()=>{if(waveInstance===instance)update()}));
-    instance.on('finish',()=>{if(waveInstance===instance)advance()});
-    instance.on('error',()=>{
-     if(waveInstance===instance&&selectToken===token)nativeFallback(source,selectToken,'Waveform unavailable; using backup playback. R2 may need CORS configured.');
-    });
-   }catch(_){nativeFallback(source,selectToken,'Waveform unavailable; using backup playback.')}
-  }).catch(()=>nativeFallback(source,selectToken,'Waveform library unavailable; using backup playback.'));
- }
- function showVideo(index){
+ const videoFooter=el('div','sp-video-footer');
+ const close=el('button','sp-video-close','Close video');close.type='button';close.onclick=()=>{
+  videoScreen.replaceChildren();video.hidden=true;
+ };
+ videoFooter.append(close);video.append(videoTitle,videoScreen,videoFooter);
+ function watch(index){
   const track=tracks[index],id=track&&youtubeVideoId(track.youtube_url||track.audio_url);
   if(!id)return;
-  ++token;stopAudio();player.hidden=true;clearVideo();
-  const frame=el('iframe');frame.title=track.title+' on YouTube';
-  frame.src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&playsinline=1';
-  frame.allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture';
-  frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';
+  window.STONE_PRISM_PLAYER?.pause();
+  videoScreen.replaceChildren();
+  const iframe=el('iframe');iframe.title=track.title+' on YouTube';
+  iframe.src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&playsinline=1';
+  iframe.allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture';
+  iframe.allowFullscreen=true;iframe.referrerPolicy='strict-origin-when-cross-origin';
   const external=el('a','sp-youtube-link','Open on YouTube ↗');
-  external.href='https://www.youtube.com/watch?v='+id;external.target='_blank';external.rel='noopener noreferrer';
+  external.href='https://www.youtube.com/watch?v='+id;
+  external.target='_blank';external.rel='noopener noreferrer';
   videoTitle.textContent=track.title+' / WATCH VIDEO';
-  videoScreen.append(frame);videoFooter.replaceChildren(closeVideo,external);video.hidden=false;update();
+  videoScreen.append(iframe);videoFooter.replaceChildren(close,external);video.hidden=false;
  }
  tracks.forEach((t,i)=>{
   const row=el('li','track-row'),label=el('div','track-label');
@@ -279,29 +196,22 @@ function createDetail(rec){
   if(t.notes)name.append(el('span','track-note',t.notes));
   label.append(name);
   const actions=el('div','sp-track-actions');
-  if(audioSource(t)){
-   const button=el('button','track-play','Play');button.type='button';button.dataset.trackIndex=String(i);
-   button.addEventListener('click',()=>selectTrack(i));actions.append(button);
+  if(t.audio_url&&!youtubeVideoId(t.audio_url)){
+   const play=el('button','track-play','▶ Play');play.type='button';
+   play.onclick=()=>window.STONE_PRISM_PLAYER?.playTrack(rec.slug,i);
+   actions.append(play);
   }
   if(youtubeVideoId(t.youtube_url||t.audio_url)){
-   const button=el('button','track-watch','Watch');button.type='button';
-   button.addEventListener('click',()=>showVideo(i));actions.append(button);
+   const watchButton=el('button','track-watch','Watch');watchButton.type='button';
+   watchButton.onclick=()=>watch(i);actions.append(watchButton);
   }
   if(!actions.childElementCount)actions.append(el('span','sp-track-soon','Coming soon'));
   row.append(label,actions);list.append(row);
  });
- content.append(list,player,video);root.append(coverBox,content);
- play.addEventListener('click',()=>{
-  if(waveInstance){
-   if(!ready){message.textContent='Waveform is loading.';return}
-   waveInstance.playPause();return;
-  }
-  if(audio){if(audio.paused)audio.play().catch(()=>{message.textContent='Unable to play audio.'});else audio.pause()}
- });
- seek.addEventListener('input',()=>{if(audio&&Number.isFinite(audio.duration))audio.currentTime=Number(seek.value)/1000*audio.duration});
+ content.append(list,video);root.append(coverBox,content);
 }
 function initRecording(){
- const root=$('#recordingDetail');if(!root)return;stopAudio();
+ const root=$('#recordingDetail');if(!root)return;
  const slug=new URLSearchParams(location.search).get('slug')||window.STONE_PRISM_PREVIEW_SLUG||'';
  const rec=data.recordings.find(r=>r.slug===slug);
  if(!rec){root.replaceChildren(el('p','library-empty','This recording is not published yet. Browse the Music page for available tracks.'));return}
@@ -358,6 +268,6 @@ function initGridDensity(){
 }
 
 function initPage(){initSiteText();initNavigation();initDialog();initVisuals();initMusic();initRecording();initGridDensity()}
-window.STONE_PRISM_APP={init:initPage,stopAudio};
+window.STONE_PRISM_APP={init:initPage,stopAudio:()=>window.STONE_PRISM_PLAYER?.stop()};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initPage);else initPage();
 })();
