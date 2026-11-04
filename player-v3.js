@@ -6,8 +6,9 @@ const tracks=library.flatMap(record=>(record.tracks||[]).map((track,index)=>({
  record,track,index,source:typeof track.audio_url==='string'?track.audio_url.trim():''
 }))).filter(item=>/^(https:\/\/|assets\/|media\/|audio\/)/i.test(item.source)
  && !/(?:youtube\.com|youtu\.be)\//i.test(item.source));
-let current=-1,element=null,wave=null,waveToken=0,visualContext=null,analyser=null,frequencies=null,visualFrame=0;
-let ui={},waveScript=null,navigationId=0;
+let current=-1,element=null,visualContext=null,analyser=null,frequencies=null,visualFrame=0;
+let ui={},navigationId=0,lastSaveAt=0;
+const PLAYBACK_KEY='stoneprism:jukebox:resume-v1';
 const $=selector=>document.querySelector(selector);
 const make=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 const seconds=n=>Number.isFinite(n)&&n>=0?Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0'):'0:00';
@@ -27,6 +28,7 @@ function playbackState(){
  if('mediaSession' in navigator)navigator.mediaSession.playbackState=playing?'playing':'paused';
  if(playing)startVisualizer();
  else {cancelAnimationFrame(visualFrame);visualFrame=0;}
+ saveState(true);
 }
 function updatePosition(){
  if(!element||current<0)return;
@@ -34,11 +36,7 @@ function updatePosition(){
  const time=element.currentTime||0;
  if(ui.time)ui.time.textContent=seconds(time)+' / '+seconds(duration);
  if(ui.seek)ui.seek.value=duration?String(Math.round(time/duration*1000)):'0';
- if(wave&&duration){
-  try{
-   if(Math.abs(wave.getCurrentTime()-time)>.22)wave.setTime(time);
-  }catch(_){/* Waveform is still decoding. */}
- }
+ saveState();
  if('mediaSession' in navigator&&navigator.mediaSession.setPositionState&&duration){
   try{navigator.mediaSession.setPositionState({duration,position:Math.min(time,duration),playbackRate:1})}catch(_){}
  }
@@ -60,59 +58,47 @@ function updateTrackUI(){
   try{navigator.mediaSession.metadata=new window.MediaMetadata(metadata)}catch(_){}
  }
 }
-function destroyWave(){
- waveToken++;
- const previous=wave;wave=null;
- if(previous)try{previous.destroy()}catch(_){}
- if(ui.wave){ui.wave.replaceChildren();ui.wave.hidden=true}
- if(ui.seek)ui.seek.hidden=false;
+// Refresh creates a new document: store the last track/time so we can recover it.
+// Most mobile browsers block audible autoplay on the new document; the resumed
+// dock and its Play button always remain available if autoplay is denied.
+function saveState(force=false){
+ if(current<0||!element)return;
+ const now=Date.now();
+ if(!force&&now-lastSaveAt<1500)return;
+ lastSaveAt=now;
+ try{sessionStorage.setItem(PLAYBACK_KEY,JSON.stringify({
+  slug:tracks[current].record.slug,index:tracks[current].index,
+  position:Math.max(0,element.currentTime||0),playing:!element.paused,
+  saved:now
+ }))}catch(_){}
 }
-function loadWaveSurfer(){
- if(window.WaveSurfer)return Promise.resolve(window.WaveSurfer);
- if(!waveScript)waveScript=new Promise((resolve,reject)=>{
-  const script=make('script');script.async=true;
-  script.src='https://cdn.jsdelivr.net/npm/wavesurfer.js@7.12.12/dist/wavesurfer.min.js';
-  script.onload=()=>window.WaveSurfer?resolve(window.WaveSurfer):reject(new Error('Waveform unavailable'));
-  script.onerror=()=>reject(new Error('Waveform library failed'));
-  document.head.append(script);
- });
- return waveScript;
-}
-function drawWave(item){
- const token=waveToken;
- loadWaveSurfer().then(WaveSurfer=>{
-  if(token!==waveToken||!ui.wave||!element)return;
-  const canvas=make('canvas').getContext('2d');
-  let gradient='#c7dc4f';
-  if(canvas){
-   gradient=canvas.createLinearGradient(0,0,480,0);
-   gradient.addColorStop(0,'#b9e849');gradient.addColorStop(.31,'#e8a34a');
-   gradient.addColorStop(.65,'#dc6558');gradient.addColorStop(1,'#a275c0');
-  }
-  // Separate paused waveform decoder; the shared audio element plays immediately
-  // on the initial tap. Waveform loading never pauses or restarts that audio.
-  ui.wave.hidden=false;ui.seek.hidden=true;
-  const instance=WaveSurfer.create({
-   container:ui.wave,url:item.source,interact:true,normalize:true,
-   height:46,barWidth:2,barGap:2,barRadius:2,
-   waveColor:'#766477',progressColor:gradient,cursorColor:'#eee3cf',cursorWidth:1
+function restoreState(){
+ let data;
+ try{data=JSON.parse(sessionStorage.getItem(PLAYBACK_KEY)||'null')}catch(_){return}
+ if(!data||!Number.isFinite(data.saved)||Date.now()-data.saved>15*60*1000)return;
+ const id=tracks.findIndex(t=>t.record.slug===data.slug&&t.index===data.index);
+ if(id<0)return;
+ current=id;element.crossOrigin='anonymous';element.src=tracks[id].source;element.preload='metadata';
+ updateTrackUI();
+ const saved=Number(data.position);
+ if(Number.isFinite(saved)&&saved>0){
+  const restorePosition=()=>{
+   if(Number.isFinite(element.duration))element.currentTime=Math.min(saved,Math.max(0,element.duration-0.3));
+   updatePosition();
+  };
+  element.addEventListener('loadedmetadata',restorePosition,{once:true});
+ }
+ if(data.playing){
+  // Restore may be blocked by the autoplay policy. A blocked resume leaves
+  // an explicit Play control instead of pretending music is still playing.
+  const attempt=element.play();
+  if(attempt&&typeof attempt.catch==='function')attempt.catch(()=>{
+   setStatus('Paused after reload — tap Play to continue.');
   });
-  wave=instance;
-  instance.on('ready',()=>{
-   if(token!==waveToken||wave!==instance)return;
-   ui.wave.hidden=false;ui.seek.hidden=true;
-   try{instance.setTime(element.currentTime||0)}catch(_){}
-  });
-  instance.on('interaction',()=>{
-   if(wave===instance&&Number.isFinite(instance.getCurrentTime()))element.currentTime=instance.getCurrentTime();
-  });
-  instance.on('error',()=>{
-   if(wave===instance){destroyWave();setStatus('Audio works; waveform visualization unavailable.')}
-  });
- }).catch(()=>{if(token===waveToken)setStatus('Audio works; waveform visualization unavailable.')});
+ }else setStatus('Ready to resume.');
 }
 function createVisualizer(){
- if(analyser||!window.AudioContext&&!window.webkitAudioContext)return;
+ if(analyser||(!window.AudioContext&&!window.webkitAudioContext))return;
  try{
   const AudioEngine=window.AudioContext||window.webkitAudioContext;
   visualContext=new AudioEngine();
@@ -126,14 +112,24 @@ function createVisualizer(){
 }
 function startVisualizer(){
  if(visualFrame)return;
- function step(){
+ let nextDraw=0;
+ function step(now){
   visualFrame=0;
   if(!element||element.paused||current<0)return;
-  if(analyser&&ui.bars?.length){
+  // Thirty frames a second are plenty for a responsive visualizer on phones.
+  if(now-nextDraw>=32&&analyser&&ui.bars?.length){
+   nextDraw=now;
    analyser.getByteFrequencyData(frequencies);
-   ui.bars.forEach((bar,i)=>{
-    const sample=frequencies[Math.min(frequencies.length-1,Math.floor(i*frequencies.length/ui.bars.length))]||0;
-    bar.style.height=(5+Math.round(sample/255*25))+'px';
+   const count=ui.bars.length,total=frequencies.length;
+   ui.bars.forEach((bar,index)=>{
+    // Logarithmic bucket sizes give the bass and lower mids more visual room.
+    const low=Math.max(0,Math.floor((Math.pow(index/count,1.55))*total));
+    const high=Math.min(total,Math.max(low+1,Math.ceil(Math.pow((index+1)/count,1.55)*total)));
+    let power=0;
+    for(let j=low;j<high;j++)power+=frequencies[j];
+    power/=Math.max(1,high-low);
+    const strength=Math.max(.1,Math.min(1,power/192));
+    bar.style.transform='scaleY('+strength.toFixed(2)+')';
    });
   }
   visualFrame=requestAnimationFrame(step);
@@ -148,16 +144,17 @@ function play(){
 function startAt(index){
  if(index<0||index>=tracks.length)return;
  const item=tracks[index];
- clearInlineVideo();destroyWave();
+ clearInlineVideo();
  current=index;
  element.pause();element.crossOrigin='anonymous';element.preload='auto';element.src=item.source;
  updateTrackUI();
- // CRITICAL: call play synchronously within the click gesture, before loading
- // the waveform library, decoding peaks, or initiating a page transition.
- play();
+ // Use a single audio request; the old waveform downloaded and decoded the
+ // entire MP3 a second time while the browser was trying to stream it.
  if(!analyser)createVisualizer();
- drawWave(item);
+ // Play during the original tap, before any asynchronous work.
+ play();
  updatePosition();
+ saveState(true);
 }
 function selectTrack(slug,index=0){
  const target=tracks.findIndex(item=>item.record.slug===slug&&item.index===Number(index));
@@ -177,10 +174,11 @@ function next(){if(current>=0&&current<tracks.length-1)startAt(current+1)}
 function pause(){element?.pause()}
 function stop(){
  if(!element)return;
- element.pause();destroyWave();element.removeAttribute('src');element.load();
+ element.pause();element.removeAttribute('src');element.load();
  current=-1;
  if(ui.dock)ui.dock.hidden=true;
  document.body.classList.remove('sp-audio-open','sp-audio-playing');
+ try{sessionStorage.removeItem(PLAYBACK_KEY)}catch(_){}
  if('mediaSession' in navigator)navigator.mediaSession.playbackState='none';
 }
 function makeDock(){
@@ -202,19 +200,19 @@ function makeDock(){
  const buttons=make('div','sp-jukebox-actions');
  buttons.append(prev,playButton,nextButton,close);
  const info=make('div','sp-jukebox-info');info.append(art,meta,buttons);
- const meter=make('div','sp-jukebox-spectrum');meter.setAttribute('aria-hidden','true');
+ const meter=make('div','sp-jukebox-spectrum');
+ meter.setAttribute('aria-hidden','true');
  const bars=[];
- for(let i=0;i<18;i++){const b=make('span');meter.append(b);bars.push(b)}
- const waveContainer=make('div','sp-jukebox-wave');waveContainer.hidden=true;
+ for(let i=0;i<48;i++){const b=make('span');b.style.transform='scaleY(.12)';meter.append(b);bars.push(b)}
  const seek=make('input','sp-jukebox-seek');seek.type='range';seek.min='0';seek.max='1000';seek.value='0';
  seek.setAttribute('aria-label','Seek through current track');
- const timeline=make('div','sp-jukebox-timeline');timeline.append(waveContainer,seek);
+ const timeline=make('div','sp-jukebox-timeline');timeline.append(seek);
  const time=make('span','sp-jukebox-time','0:00 / 0:00');
  const lower=make('div','sp-jukebox-lower');lower.append(meter,timeline,time);
  const status=make('div','sp-jukebox-status','');status.setAttribute('role','status');
  dock.append(info,lower,status);
  document.body.append(dock);
- ui={dock,image:art,title,album,details,prev,play:playButton,next:nextButton,close,wave:waveContainer,seek,time,meter,bars,status};
+ ui={dock,image:art,title,album,details,prev,play:playButton,next:nextButton,close,seek,time,meter,bars,status};
  playButton.onclick=()=>element.paused?play():pause();
  prev.onclick=previous;nextButton.onclick=next;close.onclick=stop;
  seek.oninput=()=>{
@@ -242,7 +240,7 @@ function initialize(){
   else {setStatus('Playlist finished.');playbackState()}
  });
  element.addEventListener('error',()=>setStatus('Could not load this MP3. Check its full R2 object URL.'));
- makeDock();initMediaSession();initRouting();
+ makeDock();initMediaSession();initRouting();restoreState();
 }
 function initRouting(){
  // Keep a single document alive across Stone Prism's four static pages, so the
