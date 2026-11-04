@@ -1,0 +1,16 @@
+{
+  "title": "Suicide Sunday",
+  "slug": "suicide-sunday",
+  "kind": "demo",
+  "release_type": "demo",
+  "status": "published",
+  "date": "2017-11-01",
+  "artwork": "/media/images/angel-1.webp",
+  "featured": false,
+  "tracks": [
+    {
+      "title": "Suicide Sunday",
+      "audio_url": "https://pub-720b5cbc80aa4d2a87d7b34a063dfe6f.r2.dev/Demo%20Album/Suicide%20Sunday%20%5B%23%5D.mp3"
+    }
+  ]
+}
