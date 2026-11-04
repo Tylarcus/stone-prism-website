@@ -1,5 +1,5 @@
 {
-  "title": "Suicide Sunday",
+  "title": "Suicide Sunday [Demo]",
   "slug": "suicide-sunday",
   "kind": "demo",
   "release_type": "demo",
@@ -9,7 +9,7 @@
   "featured": true,
   "tracks": [
     {
-      "title": "Suicide Sunday",
+      "title": "Suicide Sunday [Demo]",
       "audio_url": "https://pub-720b5cbc80aa4d2a87d7b34a063dfe6f.r2.dev/Demo%20Album/Suicide%20Sunday%20%5B%23%5D.mp3"
     }
   ]
