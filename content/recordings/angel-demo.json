@@ -3,16 +3,16 @@
   "slug": "angel-demo",
   "kind": "demo",
   "release_type": "demo",
-  "status": "draft",
-  "description": "Website-only recording. Add Angel's exact Cloudflare R2 audio object URL and publish when ready.",
+  "status": "published",
+  "description": "Website-exclusive Stone Prism recording.",
   "artwork": "assets/angel.webp",
   "featured": false,
   "tracks": [
     {
       "title": "Angel",
-      "audio_url": "",
+      "audio_url": "https://pub-720b5cbc80aa4d2a87d7b34a063dfe6f.r2.dev/Angel%20%5B%23%5D.mp3",
       "youtube_url": "",
-      "notes": ""
+      "notes": "Website-exclusive audio stream."
     }
   ]
 }
