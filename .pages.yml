@@ -43,9 +43,6 @@ content:
           - name: library_heading
             label: Music library heading
             type: string
-          - name: archive_heading
-            label: Archive artwork heading
-            type: string
           - name: empty_all
             label: No recordings message
             type: text
@@ -174,6 +171,26 @@ content:
         description: e.g. Website-exclusive demo, Single, or Artwork archive.
       - name: hidden
         label: Hide this homepage card
+        type: boolean
+  - name: homepage_visuals
+    label: Homepage Visual Archive / Featured Images
+    type: file
+    path: content/home-visuals.json
+    format: json
+    list: true
+    fields:
+      - name: visual
+        label: Artwork to show on homepage
+        type: reference
+        required: true
+        description: Choose a published Visual Archive image. Drag the list entries to arrange the home gallery; you can show as many or as few as you want.
+        options:
+          collection: visuals
+          value: "{fields.slug}"
+          label: "{fields.title}"
+          search: "title"
+      - name: hidden
+        label: Hide this image from homepage
         type: boolean
   - name: recordings
     label: Music / Official releases & demos
@@ -310,9 +327,6 @@ content:
         description: Match an ID from Visual Categories (e.g. collage)
       - name: published
         label: Show on website
-        type: boolean
-      - name: featured_home
-        label: Show on homepage (first five by order)
         type: boolean
       - name: order
         label: Display order

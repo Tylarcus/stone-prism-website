@@ -54,6 +54,72 @@ function initSiteText(){
 }
 // Render CMS-selected homepage music cards, preserving the original V2.5
 // three-across layout. The ordered top-level JSON array controls card order.
+function formatBadge(rec){
+ return rec.kind==='demo'?'Demo':({single:'Single',ep:'EP',album:'Album',demo:'Demo',collection:'Collection'}[rec.release_type]||'Release');
+}
+// Video posters are square like audio covers; player opens full-size on first
+// tap because YouTube prohibits embedding full controls into tiny mobile cards.
+function videoIdForSingle(rec){
+ return Array.isArray(rec.tracks)&&rec.tracks.length===1
+  ?youtubeVideoId(rec.tracks[0].youtube_url||rec.tracks[0].audio_url):'';
+}
+function videoPoster(id){return id?'https://i.ytimg.com/vi/'+id+'/hqdefault.jpg':''}
+function addCoverBadge(art,rec){
+ const tag=el('span','sp-recording-cover-tag',formatBadge(rec));
+ art.append(tag);
+}
+function makeReleaseArt(source,title,videoId){
+ const fallback=url(source.artwork||'');
+ const imSrc=videoId?videoPoster(videoId):fallback;
+ const art=el('div','release-art');
+ if(imSrc){
+  const im=el('img');im.src=imSrc;im.alt=(videoId?'YouTube video preview for ':'Cover artwork for ')+title;
+  im.loading='lazy';
+  if(videoId&&fallback)im.addEventListener('error',()=>{if(im.src!==new URL(fallback,location.href).href)im.src=fallback},{once:true});
+  art.append(im);
+ }else art.append(el('div','recording-cover-placeholder','SP'));
+ if(videoId)art.classList.add('sp-video-cover');
+ return art;
+}
+function ensureVideoDialog(){
+ let dialog=$('#spVideoDialog');if(dialog)return dialog;
+ dialog=el('dialog','sp-youtube-dialog');dialog.id='spVideoDialog';
+ dialog.setAttribute('aria-label','Stone Prism YouTube video');
+ const header=el('div','sp-youtube-dialog-header');
+ const heading=el('strong','sp-youtube-dialog-title','');
+ const close=el('button','sp-youtube-dialog-close','×');close.type='button';
+ close.setAttribute('aria-label','Close YouTube video');close.onclick=()=>dialog.close();
+ header.append(heading,close);
+ const stage=el('div','sp-youtube-dialog-screen');stage.id='spVideoStage';
+ const meta=el('div','sp-youtube-dialog-meta');
+ const caption=el('p','sp-youtube-dialog-caption','');caption.id='spVideoCaption';
+ const watch=el('a','sp-youtube-external','Watch on YouTube ↗');
+ watch.id='spVideoExternal';watch.target='_blank';watch.rel='noopener noreferrer';
+ meta.append(caption,watch);dialog.append(header,stage,meta);
+ dialog.addEventListener('close',()=>stage.replaceChildren());
+ dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
+ document.body.append(dialog);return dialog;
+}
+function closeVideoDialog(){const dialog=$('#spVideoDialog');if(dialog?.open)dialog.close()}
+function openYouTube(rec,id){
+ if(!id)return;
+ window.STONE_PRISM_PLAYER?.pause();
+ const dialog=ensureVideoDialog();
+ if(dialog.open)dialog.close();
+ const stage=$('#spVideoStage');
+ const frame=el('iframe');
+ frame.title=rec.title+' — Stone Prism YouTube video';
+ frame.src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&playsinline=1&rel=0';
+ frame.setAttribute('allow','autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture; fullscreen');
+ frame.setAttribute('allowfullscreen','');
+ frame.referrerPolicy='strict-origin-when-cross-origin';
+ $('#spVideoExternal').href='https://www.youtube.com/watch?v='+id;
+ $('#spVideoCaption').textContent=rec.description||'Stone Prism video';
+ dialog.querySelector('.sp-youtube-dialog-title').textContent=rec.title;
+ stage.replaceChildren(frame);
+ dialog.showModal();
+}
+window.STONE_PRISM_VIDEO={close:closeVideoDialog};
 function initHomepageMusic(){
  const grid=$('.releases .release-grid');
  if(!grid||!Array.isArray(data.homeMusic))return;
@@ -67,35 +133,43 @@ function initHomepageMusic(){
   if(!source)continue;
   const title=pick.title||source.title||'Stone Prism';
   const subtitle=pick.subtitle||(isRecording?prettyType(source):'Artwork archive');
-  const image=isRecording?source.artwork:source.image;
+  const first=isRecording&&Array.isArray(source.tracks)&&source.tracks.length===1
+   ?source.tracks[0]:null;
+  const playable=!!first&&!!url(first.audio_url)&&!youtubeVideoId(first.audio_url);
+  const videoId=isRecording&&!playable?videoIdForSingle(source):'';
   const link=el('a','release-card');
-  let playable=false;
   if(isRecording){
-   const first=(source.tracks||[]).findIndex(t=>url(t.audio_url)&&!/(?:youtube\.com|youtu\.be)\//i.test(t.audio_url));
-   playable=first>=0;
    link.href=recordingLink(source.slug);
    if(playable){
-    link.dataset.spPlay=source.slug+':'+first;
+    link.dataset.spPlay=source.slug+':0';
     link.setAttribute('aria-label','Play '+title+' on Stone Prism');
+   }else if(videoId){
+    link.addEventListener('click',e=>{e.preventDefault();openYouTube(source,videoId)});
+    link.setAttribute('aria-label','Play '+title+' YouTube video');
    }else link.setAttribute('aria-label','Open '+title+' details');
   }else{
    link.href='visuals.html';
-   if(url(image)){
-    link.dataset.image=url(image);
+   if(url(source.image)){
+    link.dataset.image=url(source.image);
     link.dataset.title=title+' — artwork';
    }
    link.setAttribute('aria-label','View '+title+' artwork');
   }
-  const art=el('div','release-art');
-  if(url(image)){
-   const pic=el('img');pic.src=url(image);pic.alt=title+' artwork';pic.loading='lazy';
-   art.append(pic);
-  }else art.append(el('div','recording-cover-placeholder','SP'));
-  const foot=el('div','release-foot');
-  const text=el('div');text.append(el('div','release-name',title),el('div','release-sub',subtitle));
-  const action=el('span','play-circle'+(playable?' sp-home-play':''),playable?'▶':'↗');
+  let art;
+  if(isRecording){
+   art=makeReleaseArt(source,title,videoId);
+   addCoverBadge(art,source);
+  }else{
+   art=el('div','release-art');
+   if(url(source.image)){
+    const img=el('img');img.src=url(source.image);img.alt=title+' artwork';img.loading='lazy';art.append(img);
+   }else art.append(el('div','recording-cover-placeholder','SP'));
+  }
+  const foot=el('div','release-foot'),copy=el('div');
+  copy.append(el('div','release-name',title),el('div','release-sub',subtitle));
+  const action=el('span','play-circle'+((playable||videoId)?' sp-home-play':''),(playable||videoId)?'▶':'↗');
   action.setAttribute('aria-hidden','true');
-  foot.append(text,action);link.append(art,foot);items.push(link);
+  foot.append(copy,action);link.append(art,foot);items.push(link);
  }
  grid.replaceChildren(...items);
 }
@@ -141,10 +215,11 @@ function initVisuals(){
   }
   grid.replaceChildren(...data.visuals.map(v=>makeVisual(v)));
  }
- const home=$('[data-cms-featured]');if(home&&data.visuals.length){
-  // V2.2 fallback markup remains if CMS contains no featured visual entries.
-  const featured=data.visuals.filter(v=>v.featured_home).slice(0,5);
-  if(featured.length)home.replaceChildren(...featured.map(v=>makeVisual(v,'home')));
+ const home=$('[data-cms-featured]');
+ if(home&&Array.isArray(data.homeVisuals)){
+  // This ordered CMS list is authoritative, including an intentionally empty list.
+  const chosen=data.homeVisuals.map(pick=>data.visuals.find(v=>v.slug===pick.slug)).filter(Boolean);
+  home.replaceChildren(...chosen.map(v=>makeVisual(v,'home')));
  }
  const buttons=document.querySelectorAll('[data-filter]'),entries=document.querySelectorAll('.art-entry');
  function filter(value){visualFilter=value;buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter===value)));
@@ -162,30 +237,31 @@ function cover(src,title){const box=el('div','release-art');const safe=url(src);
 function makeRecording(rec){
  const row=el('article','recording-card');
  const tracks=Array.isArray(rec.tracks)?rec.tracks:[];
- const available=tracks.findIndex(t=>typeof t.audio_url==='string'&&t.audio_url.trim()&&!/(?:youtube\.com|youtu\.be)\//i.test(t.audio_url));
- // A multi-track EP or album should open the track list, not arbitrarily play
- // its first song. One-track audio recordings get genuine one-tap playback.
+ const available=tracks.findIndex(t=>typeof t.audio_url==='string'&&t.audio_url.trim()&&!youtubeVideoId(t.audio_url));
+ // Single-track recordings launch directly. Albums/EPs open the track list.
  const canPlay=available>=0&&tracks.length===1;
+ const videoId=!canPlay?videoIdForSingle(rec):'';
  const hit=el(canPlay?'button':'a','sp-recording-hit release-card');
  if(canPlay){
   hit.type='button';
   hit.setAttribute('aria-label','Play '+rec.title+' on Stone Prism');
   hit.onclick=()=>window.STONE_PRISM_PLAYER?.playTrack(rec.slug,available);
+ }else if(videoId){
+  hit.href=recordingLink(rec.slug);
+  hit.setAttribute('aria-label','Play '+rec.title+' YouTube video');
+  hit.onclick=e=>{e.preventDefault();openYouTube(rec,videoId)};
  }else{
   hit.href=recordingLink(rec.slug);
   hit.setAttribute('aria-label','Open '+rec.title+' details and tracks');
  }
- const art=cover(rec.artwork,rec.title);
- const format=rec.kind==='demo'?'Demo':({
-  single:'Single',ep:'EP',album:'Album',collection:'Collection'
- }[rec.release_type]||'Release');
- art.append(el('span','sp-recording-cover-tag',format));
+ const art=makeReleaseArt(rec,rec.title,videoId);
+ addCoverBadge(art,rec);
  const foot=el('div','release-foot');
  const copy=el('div','sp-recording-copy');
  copy.append(el('div','release-name',rec.title));
  const caption=(rec.description||'').trim();
  if(caption)copy.append(el('div','release-sub',caption));
- const circle=el('span','play-circle'+(canPlay?' sp-home-play':''),canPlay?'▶':'↗');
+ const circle=el('span','play-circle'+((canPlay||videoId)?' sp-home-play':''),(canPlay||videoId)?'▶':'↗');
  circle.setAttribute('aria-hidden','true');
  foot.append(copy,circle);
  hit.append(art,foot);row.append(hit);
@@ -197,7 +273,7 @@ function initMusic(){
  function render(){
   const visible=data.recordings.filter(x=>activeFilter==='all'||x.kind===activeFilter);
   grid.replaceChildren(...visible.map(makeRecording));
-  empty.textContent=visible.length?'':activeFilter==='demo'?(cmsText('music.empty_demo')??'No website-exclusive demos are published yet.'):activeFilter==='official'?(cmsText('music.empty_official')??'No official releases have been published here yet.'):(cmsText('music.empty_all')??'No recordings have been published yet. The original artwork remains below.');
+  empty.textContent=visible.length?'':activeFilter==='demo'?(cmsText('music.empty_demo')??'No website-exclusive demos are published yet.'):activeFilter==='official'?(cmsText('music.empty_official')??'No official releases have been published here yet.'):(cmsText('music.empty_all')??'No recordings have been published yet.');
   empty.hidden=visible.length>0;
   buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.musicFilter===activeFilter)));
  }

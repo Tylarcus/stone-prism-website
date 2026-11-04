@@ -94,9 +94,23 @@ for(const pick of rawHomeMusic){
   subtitle:String(pick.subtitle||'').slice(0,120).trim()
  });
 }
+// Ordered HOME visual gallery, independent of the full Visual Archive.
+// Bad/draft/missing references never leak into the published homepage.
+const rawHomeVisuals=JSON.parse(fs.readFileSync(join('content/home-visuals.json'),'utf8'));
+if(!Array.isArray(rawHomeVisuals))throw Error('Homepage Visual Archive must be an array');
+const homeVisuals=[],homeVisualSeen=new Set();
+for(const pick of rawHomeVisuals){
+ if(!pick||pick.hidden===true)continue;
+ const slug=typeof pick.visual==='string'?pick.visual.trim():'';
+ if(!validSlug(slug)||homeVisualSeen.has(slug))continue;
+ const visual=visuals.find(v=>v.slug===slug);
+ if(!visual)continue;
+ homeVisualSeen.add(slug);
+ homeVisuals.push({slug,title:visual.title});
+}
 // Single-file Pages CMS editor for all general site copy and search metadata.
 const siteText=JSON.parse(fs.readFileSync(join('content/site-text.json'),'utf8'));
-const content={version:'2.7',recordings,visuals,visualCategories,siteText,homeMusic};
+const content={version:'2.8',recordings,visuals,visualCategories,siteText,homeMusic,homeVisuals};
 fs.mkdirSync(join('data'),{recursive:true});
 const json=JSON.stringify(content).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
 fs.writeFileSync(join('data/site-content.js'),`/* Built from CMS content. Do not hand-edit. */\nwindow.STONE_PRISM_CONTENT=${json};\n`);
