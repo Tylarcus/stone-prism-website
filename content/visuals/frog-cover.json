@@ -1,10 +1,9 @@
 {
   "title": "Frog cover",
   "slug": "frog-cover",
-  "description": "Illustrated frog mascot",
+  "description": "It's a big dirty frog.",
   "image": "assets/frog-cover.webp",
   "category": "illustration",
-  "order": 70,
   "published": true,
-  "featured_home": false
+  "order": 70
 }
