@@ -5,11 +5,15 @@
   },
   {
     "recording": "angel-demo",
+    "artwork_visual_override": "angel-flower",
     "hidden": false
   },
   {
     "recording": "oh-the-guilt-demo",
     "visual": "teeth-concept",
+    "hidden": false
+  },
+  {
     "hidden": false
   }
 ]
