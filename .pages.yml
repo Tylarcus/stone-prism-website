@@ -577,6 +577,8 @@ content:
       - name: published
         label: Show on website
         type: boolean
+        default: true
+        description: Enabled by default for newly added artwork; turn off to keep an entry private from the public gallery.
       - name: order
         label: Display order
         type: number
