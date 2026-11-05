@@ -131,4 +131,21 @@ assert.match(fs.readFileSync('styles.css','utf8'),/\.sp-youtube-dialog-screen/,
  'Embedded YouTube video must have a responsive player');
 console.log('Player V3.5: home visuals, single/video badges, YouTube viewer and music-only vault passed.');
 
+
+// The CMS must make the visibility flag obvious and default NEW archive items
+// to public while allowing owners to explicitly switch individual entries off.
+const visualCms=fs.readFileSync('.pages.yml','utf8');
+const publishedField=visualCms.slice(visualCms.indexOf('  - name: visuals\n    label: Visual Archive'),
+ visualCms.indexOf('  - name: visual_categories\n'));
+assert.match(publishedField,/- name: published\n\s+label: Show on website\n\s+type: boolean\n\s+default: true/,
+ 'New Visual Archive entries should be visible by default');
+const visualSources=fs.readdirSync('content/visuals').filter(n=>n.endsWith('.json'))
+ .map(n=>JSON.parse(fs.readFileSync(path.join('content/visuals',n),'utf8')));
+for(const visual of visualSources){
+ if(visual.published!==true||typeof visual.image!=='string'||!visual.image.trim())continue;
+ assert.ok(built.visuals.some(x=>x.slug===visual.slug),
+  'A published Visual Archive entry must appear in the generated archive: '+visual.slug);
+}
+console.log('Visual Archive visibility: published entries included, hidden entries excluded, new entries default visible.');
+
 console.log('Stone Prism Player V2: CMS publishing, audio and video separation checks passed.');
