@@ -63,7 +63,9 @@ jobs:
           node --check tools/render-site-text.mjs
           node --check tools/test-seo.mjs
           node --check tools/build.mjs
+          node --check tools/test-cms-audio.mjs
           node tools/test-music.mjs
+          node tools/test-cms-audio.mjs
           node tools/test-ui-v35.mjs
           node tools/test-layout-ui.mjs
           node tools/test-cms-inheritance.mjs
