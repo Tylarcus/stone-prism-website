@@ -39,6 +39,24 @@ const normalizedYouTube=input=>{
  const id=youtubeVideoId(input);
  return id?'https://www.youtube.com/watch?v='+id:'';
 };
+// Pages CMS stores new MP3 uploads in Git. GitHub Actions safely copies them
+// to R2 under cms-audio/ before the published site is generated.
+const audioHost=JSON.parse(fs.readFileSync(join('content/audio-host.json'),'utf8'));
+const cmsAudioBase=String(audioHost.public_base_url||'').replace(/\/+$/,'');
+const cmsAudioPrefix=String(audioHost.object_prefix||'');
+if(!/^https:\/\/(?:[a-z0-9-]+\.r2\.dev|audio\.stoneprism\.music)$/i.test(new URL(cmsAudioBase).origin)
+ || !/^[a-z0-9-]+$/.test(cmsAudioPrefix)){
+ throw Error('Invalid public R2 host configuration');
+}
+function resolveCmsAudio(file){
+ if(typeof file!=='string'||!file.trim())return '';
+ const match=file.trim().match(/^\/?media\/audio\/([a-z0-9][a-z0-9._-]*\.mp3)$/i);
+ if(!match)throw Error('Invalid CMS audio path; use the MP3 picker in Pages CMS');
+ const name=match[1];
+ if(!fs.existsSync(join('media','audio',name)))throw Error('Uploaded MP3 is missing from media/audio: '+name);
+ return cmsAudioBase+'/'+cmsAudioPrefix+'/'+encodeURIComponent(name);
+}
+
 const recordings=[],seen=new Set();
 for(const item of loadCollection('recordings')){
  if(item.status!=='published')continue;
@@ -48,7 +66,9 @@ for(const item of loadCollection('recordings')){
  if(!['official','demo'].includes(item.kind))throw Error(`Invalid recording category ${item._source}`);
  const tracks=Array.isArray(item.tracks)?item.tracks:[];
  const filteredTracks=tracks.filter(t=>t&&typeof t.title==='string').map((t,i)=>{
-   const audio=normalizePath(t.audio_url);
+   // A CMS upload overrides the legacy URL; old manually entered R2 links
+   // still work without migration or any change to existing recordings.
+   const audio=t.audio_file?resolveCmsAudio(t.audio_file):normalizePath(t.audio_url);
    return {
     title:t.title.trim().slice(0,200),notes:String(t.notes||'').slice(0,1500),
     // Migrate old CMS data safely: a YouTube link in audio_url is a video, never an audio source.
