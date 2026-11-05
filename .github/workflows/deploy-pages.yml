@@ -22,6 +22,34 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Copy MP3s chosen in Pages CMS into Cloudflare R2
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          AWS_EC2_METADATA_DISABLED: "true"
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -d media/audio ]] || ! find media/audio -maxdepth 1 -type f -iname '*.mp3' | grep -q .; then
+            echo "No CMS-uploaded MP3 files to synchronize."
+            exit 0
+          fi
+          if [[ -z "${R2_ACCOUNT_ID}" || -z "${R2_BUCKET}" || -z "${AWS_ACCESS_KEY_ID}" || -z "${AWS_SECRET_ACCESS_KEY}" ]]; then
+            echo "::error::CMS MP3 upload requires four GitHub Actions secrets: R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY. See CMS_AUDIO_UPLOAD_SETUP.md."
+            exit 1
+          fi
+          if ! command -v aws >/dev/null 2>&1; then
+            echo "::error::AWS CLI not available on the runner. Do not publish unsynchronized MP3s."
+            exit 1
+          fi
+          aws s3 sync media/audio/ "s3://${R2_BUCKET}/cms-audio/" \
+            --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" \
+            --exclude '*' --include '*.mp3' \
+            --content-type 'audio/mpeg' --only-show-errors
+          echo "CMS MP3 staging synchronized to R2. Existing objects are never deleted."
       - name: Generate published content
         run: node tools/build.mjs
       - name: Verify media fields and player
@@ -35,7 +63,9 @@ jobs:
           node --check tools/render-site-text.mjs
           node --check tools/test-seo.mjs
           node --check tools/build.mjs
+          node --check tools/test-cms-audio.mjs
           node tools/test-music.mjs
+          node tools/test-cms-audio.mjs
           node tools/test-ui-v35.mjs
           node tools/test-layout-ui.mjs
           node tools/test-cms-inheritance.mjs
@@ -65,7 +95,8 @@ jobs:
           mkdir -p _site
           cp index.html music.html visuals.html recording.html styles.css script.js player-v3.js _site/
           cp -R assets data _site/
-          if [ -d media ]; then cp -R media _site/; fi
+          # Album art belongs in Pages; MP3s belong only in R2, not the published Pages bundle.
+          if [ -d media/images ]; then mkdir -p _site/media; cp -R media/images _site/media/; fi
           touch _site/.nojekyll
       - name: Render editable website text into static pages
         run: node tools/render-site-text.mjs _site
