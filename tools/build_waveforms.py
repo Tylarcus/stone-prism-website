@@ -7,7 +7,8 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
+import re
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -26,6 +27,22 @@ def allowed_source(raw):
     return parsed.scheme == "https" and (
         host.endswith(".r2.dev") or host == "audio.stoneprism.music"
     )
+
+
+def track_audio_source(track):
+    """Resolve the same R2 URL as tools/build.mjs for a Pages CMS audio_file."""
+    upload = track.get("audio_file")
+    if not upload:
+        return track.get("audio_url", "")
+    match = re.fullmatch(r"/?media/audio/([a-z0-9][a-z0-9._-]*\.mp3)", str(upload), re.I)
+    if not match:
+        return ""
+    config = json.loads((ROOT / "content/audio-host.json").read_text(encoding="utf-8"))
+    base = str(config["public_base_url"]).rstrip("/")
+    prefix = str(config["object_prefix"])
+    if not re.fullmatch(r"[a-z0-9-]+", prefix):
+        return ""
+    return f"{base}/{prefix}/{quote(match.group(1))}"
 
 
 def envelope(pcm, count=PEAK_COUNT):
@@ -112,7 +129,7 @@ def build():
         if not slug or not all(ch.isalnum() or ch == "-" for ch in slug):
             continue
         for i, track in enumerate(record.get("tracks") or []):
-            source = track.get("audio_url", "")
+            source = track_audio_source(track)
             if not allowed_source(source):
                 continue
             try:
