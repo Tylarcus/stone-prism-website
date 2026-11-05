@@ -65,7 +65,13 @@ for(const item of loadCollection('recordings')){
   featured:!!item.featured,order:Number(item.order)||1000,tracks:filteredTracks});
 }
 recordings.sort((a,b)=>(Number(b.featured)-Number(a.featured))||(a.order-b.order)||(b.date||'').localeCompare(a.date||'')||a.title.localeCompare(b.title));
-let visualCategories=JSON.parse(fs.readFileSync(join('content/visual-categories.json'),'utf8'));
+// Category choices are managed as a Pages CMS collection, making artwork's
+// Category field a searchable picker instead of a manually typed ID.
+// Keep the original list as a read-only fallback for legacy clones/archives.
+const visualCategoryFolder=join('content','visual-category-options');
+let visualCategories=fs.existsSync(visualCategoryFolder)
+ ?loadCollection('visual-category-options')
+ :JSON.parse(fs.readFileSync(join('content/visual-categories.json'),'utf8'));
 const ids=new Set();visualCategories=visualCategories.filter(x=>{if(!validSlug(x.id)||ids.has(x.id))return false;ids.add(x.id);return true}).map(x=>({id:x.id,label:String(x.label||x.id)}));
 const visuals=loadCollection('visuals').filter(x=>x.published===true&&normalizePath(x.image)).map(x=>({
  slug:x.slug,title:String(x.title||'').slice(0,180),description:String(x.description||'').slice(0,1500),
