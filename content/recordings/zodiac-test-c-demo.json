@@ -1,0 +1,17 @@
+{
+  "title": "Zodiac 'Test C' [Demo]",
+  "slug": "zodiac-test-c-demo",
+  "kind": "demo",
+  "release_type": "demo",
+  "status": "published",
+  "date": "2026-11-05",
+  "description": "An experimental arrangement for Zodiac.",
+  "featured": true,
+  "tracks": [
+    {
+      "title": "Zodiac 'Test C' [Demo]",
+      "audio_file": "/media/audio/mw3za9cx-gsaeh0vr.mp3",
+      "notes": "An experimental arrangement for Zodiac."
+    }
+  ]
+}
