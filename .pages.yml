@@ -452,7 +452,7 @@ content:
         pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
         description: e.g. midnight-demo-01 — do not reuse a slug
       - name: kind
-        label: Library category
+        label: Music category (choose one)
         type: select
         required: true
         options:
@@ -462,7 +462,7 @@ content:
             - name: demo
               label: Website-exclusive demo
       - name: release_type
-        label: Format
+        label: Recording format (choose one)
         type: select
         required: true
         options:
@@ -565,10 +565,15 @@ content:
         options:
           media: artwork
       - name: category
-        label: Category ID
-        type: string
+        label: Artwork category
+        type: reference
         required: true
-        description: Match an ID from Visual Categories (e.g. collage)
+        description: Select an existing category by name. The correct ID is saved automatically. Add or rename choices under Visual Categories / Filters.
+        options:
+          collection: visual_categories
+          value: "{fields.id}"
+          label: "{fields.label}"
+          search: "label,id"
       - name: published
         label: Show on website
         type: boolean
@@ -577,17 +582,22 @@ content:
         type: number
   - name: visual_categories
     label: Visual Categories / Filters
-    type: file
-    path: content/visual-categories.json
+    type: collection
+    path: content/visual-category-options
     format: json
-    list: true
+    filename: "{fields.id}.json"
+    view:
+      primary: label
+      fields: [label, id]
+      sort: [label]
     fields:
       - name: id
-        label: Category ID (lowercase, no spaces)
+        label: Category ID (set when creating a new category)
         type: string
         required: true
         pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        description: Technical identifier saved with artwork; normally leave unchanged after creation.
       - name: label
-        label: Category label visitors see
+        label: Category name shown in the dropdown and website
         type: string
         required: true
