@@ -51,7 +51,7 @@ try{
  assert.ok(workflow.indexOf('Copy MP3s chosen in Pages CMS into Cloudflare R2')<
   workflow.indexOf('- name: Generate published content'),'R2 sync must occur before site build');
  assert.match(workflow,/aws s3 sync media\/audio\//,'Song files must sync to R2');
- assert.match(workflow,/R2_SECRET_ACCESS_KEY: \$\{\{ secrets\.R2_SECRET_ACCESS_KEY \}\}/,
+ assert.match(workflow,/AWS_SECRET_ACCESS_KEY: \$\{\{ secrets\.R2_SECRET_ACCESS_KEY \}\}/,
   'R2 credential must come from GitHub Actions secret');
  assert.ok(!workflow.includes('cp -R media _site/'),'Published Pages bundle must not contain MP3 staging');
  assert.match(workflow,/cp -R media\/images _site\/media\//,
