@@ -11,6 +11,27 @@ assert.ok(Array.isArray(built.recordings),'Recordings must be an array');
 assert.ok(Array.isArray(built.visuals),'Visuals must be an array');
 assert.equal(typeof built.siteText,'object','CMS text must be preserved');
 
+const categoryFolder='content/visual-category-options';
+const categoryEntries=fs.readdirSync(categoryFolder)
+ .filter(name=>name.endsWith('.json'))
+ .map(name=>JSON.parse(fs.readFileSync(path.join(categoryFolder,name),'utf8')));
+for(const entry of categoryEntries){
+ assert.ok(built.visualCategories.some(x=>x.id===entry.id&&x.label===entry.label),
+  'New Visual Categories must automatically appear in public category filters');
+}
+const config=fs.readFileSync('.pages.yml','utf8');
+const artFields=config.slice(config.indexOf('  - name: visuals\n    label: Visual Archive'),config.indexOf('  - name: visual_categories\n'));
+assert.match(artFields,/- name: category\n\s+label: Artwork category\n\s+type: reference/,
+ 'Art category must be a searchable CMS choice, not a manually typed ID');
+assert.match(artFields,/collection: visual_categories\n\s+value: "\{fields.id\}"\n\s+label: "\{fields.label\}"/,
+ 'Art category picker must display readable labels and store original IDs');
+const musicFields=config.slice(config.indexOf('  - name: recordings\n'),config.indexOf('  - name: visuals\n    label: Visual Archive'));
+assert.match(musicFields,/- name: kind\n\s+label: Music category \(choose one\)\n\s+type: select/,
+ 'Music library category must remain a dropdown');
+assert.match(musicFields,/- name: release_type\n\s+label: Recording format \(choose one\)\n\s+type: select/,
+ 'Music format must remain a dropdown');
+
+
 const sourceDir='content/recordings';
 const entries=fs.readdirSync(sourceDir).filter(n=>n.endsWith('.json'))
  .map(n=>JSON.parse(fs.readFileSync(path.join(sourceDir,n),'utf8')));
