@@ -14,6 +14,25 @@ try {
  fs.mkdirSync(path.join(tmp,'tools'),{recursive:true});
  fs.cpSync(path.join(root,'tools','build.mjs'),path.join(tmp,'tools','build.mjs'));
  fs.cpSync(path.join(root,'content'),path.join(tmp,'content'),{recursive:true});
+ // Real CMS recordings can now contain MP3 file references. This test copies
+ // only JSON content, so stage tiny placeholders for valid, existing uploads
+ // rather than copying large audio binaries into every synthetic test build.
+ // Missing originals still fail (the production build independently checks).
+ const scratchAudio=path.join(tmp,'media','audio');
+ fs.mkdirSync(scratchAudio,{recursive:true});
+ for(const name of fs.readdirSync(path.join(tmp,'content','recordings'))){
+  if(!name.endsWith('.json'))continue;
+  const rec=JSON.parse(fs.readFileSync(path.join(tmp,'content','recordings',name),'utf8'));
+  if(rec.status!=='published')continue;
+  for(const track of rec.tracks||[]){
+   if(!track?.audio_file)continue;
+   const match=String(track.audio_file).match(/^\/?media\/audio\/([a-z0-9][a-z0-9._-]*\.mp3)$/i);
+   if(!match)continue; // Existing production validator rejects unsafe paths.
+   const source=path.join(root,'media','audio',match[1]);
+   assert.ok(fs.existsSync(source),'Referenced audio file missing from repository: '+match[1]);
+   fs.writeFileSync(path.join(scratchAudio,match[1]),'test-only-placeholder');
+  }
+ }
  const file=relative=>path.join(tmp,relative);
  const load=relative=>JSON.parse(fs.readFileSync(file(relative),'utf8'));
  const save=(relative,obj)=>fs.writeFileSync(file(relative),JSON.stringify(obj,null,2));
