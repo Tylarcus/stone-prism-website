@@ -7,6 +7,12 @@ media:
     output: /media/images
     categories: [image]
     rename: safe
+  - name: song_uploads
+    label: Song files (MP3)
+    input: media/audio
+    output: /media/audio
+    extensions: [mp3]
+    rename: random
 content:
   - name: website_text
     label: Website Text & Settings
@@ -525,10 +531,17 @@ content:
             label: Track title
             type: string
             required: true
+          - name: audio_file
+            label: Upload MP3 (no Cloudflare login)
+            type: file
+            description: Choose an MP3 (under 25 MiB) here. Saving stores it in GitHub, and the publish workflow copies it to Cloudflare R2 automatically after one-time setup. This takes priority over the older URL field. Only use music you have permission to publish.
+            options:
+              media: song_uploads
+              extensions: [mp3]
           - name: audio_url
-            label: Direct audio file URL (MP3 / R2)
+            label: Existing direct MP3 link (optional)
             type: string
-            description: Paste the entire public URL of a playable audio FILE, such as https://pub-xxxx.r2.dev/Angel.mp3. The bucket root and YouTube links do not work here.
+            description: Keep existing Cloudflare R2 links here; no need to change your old recordings. For new uploads use Upload MP3 above, and leave this blank. This field is still useful for externally hosted audio.
           - name: youtube_url
             label: YouTube video URL (optional)
             type: string
