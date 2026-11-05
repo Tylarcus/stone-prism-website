@@ -27,20 +27,20 @@
   },
   "seo": {
     "home": {
-      "title": "Stone Prism | Music",
-      "description": "Stone Prism — Official band website. A collection of music, noise and artwork."
+      "title": "Stone Prism Band | Grunge Rock, Demos & Artwork",
+      "description": "Stone Prism is a grunge rock band making songs, demos, strange artwork, and frog-related nonsense. Listen to our recordings and explore the archive."
     },
     "music": {
-      "title": "Music / Releases | Stone Prism",
-      "description": "Stone Prism music and releases archive"
+      "title": "Stone Prism Music | Grunge Demos & Recordings",
+      "description": "Listen to Stone Prism's grunge rock recordings, original demos, and songs. Browse the recording vault, stream music, and watch live acoustic videos."
     },
     "visuals": {
-      "title": "Visual Archive | Stone Prism",
-      "description": "Stone Prism visual archive, flyers and photography"
+      "title": "Stone Prism Visual Archive | Band Art, Posters & Photos",
+      "description": "Explore Stone Prism's strange artwork, concert flyers, guitars, and frog-related visual experiments. The art and artifacts behind the grunge rock band."
     },
     "recording": {
-      "title": "Recording | Stone Prism",
-      "description": "Stone Prism official releases and website-exclusive demos. Stream on site."
+      "title": "Stone Prism Recordings | Songs & Demos",
+      "description": "Explore Stone Prism songs and demos, hear the recordings, and discover the stories behind the music."
     }
   }
 }
