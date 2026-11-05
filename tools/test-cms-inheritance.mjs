@@ -61,7 +61,17 @@ try {
  home.push({recording:fixtureSlug,visual:'',artwork_visual_override:'',hidden:false});
  save('content/home-music.json',home);
 
+ // New categories created through the CMS collection must immediately
+ // become choices for artwork and appear in the public Visual Archive filters.
+ const newCategoryFile='content/visual-category-options/polaroids.json';
+ save(newCategoryFile,{id:'polaroids',label:'Polaroids'});
+ primary.category='polaroids';
+ save(primaryFile,primary);
  const initial=build();
+ assert.ok(initial.visualCategories.some(x=>x.id==='polaroids'&&x.label==='Polaroids'),
+  'A new category in the CMS collection must appear automatically in site filters');
+ assert.equal(initial.visuals.find(x=>x.slug===primarySlug).category,'polaroids',
+  'Artwork must retain its selected category ID');
  const initialRec=initial.recordings.find(r=>r.slug===fixtureSlug);
  assert.equal(initialRec.uploaded_artwork,'assets/angel.webp');
  assert.equal(initialRec.artwork,initialRec.uploaded_artwork,
