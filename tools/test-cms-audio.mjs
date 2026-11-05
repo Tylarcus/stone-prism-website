@@ -11,6 +11,14 @@ try{
  fs.mkdirSync(path.join(tmp,'tools'),{recursive:true});
  fs.cpSync(path.join(root,'tools/build.mjs'),path.join(tmp,'tools/build.mjs'));
  fs.cpSync(path.join(root,'content'),path.join(tmp,'content'),{recursive:true});
+ // Test only the synthetic CMS recording. Production content (such as Zodiac)
+ // can legitimately reference newly uploaded MP3s that are not part of this
+ // small temporary fixture. The real publisher validates all actual files
+ // separately with `node tools/build.mjs` before running this test.
+ const fixtureRecordingsDir=path.join(tmp,'content','recordings');
+ for(const filename of fs.readdirSync(fixtureRecordingsDir)){
+  if(filename.endsWith('.json')) fs.rmSync(path.join(fixtureRecordingsDir,filename));
+ }
  fs.mkdirSync(path.join(tmp,'media/audio'),{recursive:true});
  const testSong='cms-upload-test-1001.mp3';
  fs.writeFileSync(path.join(tmp,'media/audio',testSong),'synthetic-test-audio-not-for-playback');
