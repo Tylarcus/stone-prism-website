@@ -32,7 +32,10 @@ This writes only `lab/content/homepage.json` in the *experimental branch*.
 It does not change `content/site-text.json`, the Stone Prism site, or Cloudflare.
 
 `npm run prepare:static` builds the source site's existing JSON content and
-copies CSS/JS/images into the local `lab/public` folder.
+copies the original homepage HTML, CSS, JavaScript, images, and catalogue into
+the local lab build. The homepage HTML is bundled at compile time (`?raw`)
+so the deployed Cloudflare Worker will not depend on a Node filesystem.
+
 **No MP3s are copied or uploaded.** Existing R2 URLs are used for playback.
 
 ## Intended next steps (not yet implemented)

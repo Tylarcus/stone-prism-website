@@ -5,12 +5,16 @@ import { execFileSync } from 'node:child_process';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '../..');
-const pub = resolve(here, '../public');
+const lab = resolve(here, '..');
+const pub = join(lab, 'public');
+const generated = join(lab, 'src/generated');
 
 // Build the actual existing CMS data so the music/visual pages and player
 // continue working in the clone. Never upload songs: this is local-only.
 execFileSync(process.execPath, [join(repo, 'tools/build.mjs')], { cwd: repo, stdio: 'inherit' });
 mkdirSync(pub, { recursive: true });
+mkdirSync(generated, { recursive: true });
+copyFileSync(join(repo, 'index.html'), join(generated, 'original-homepage.html'));
 for (const folder of ['assets', 'data']) {
   cpSync(join(repo, folder), join(pub, folder), { recursive: true, force: true });
 }
@@ -21,4 +25,4 @@ if (existsSync(mediaImages)) {
 for (const file of ['styles.css', 'script.js', 'player-v3.js', 'music.html', 'visuals.html', 'recording.html']) {
   copyFileSync(join(repo, file), join(pub, file));
 }
-console.log('Lab: source design, scripts, artwork, and generated CMS data copied; no MP3s copied.');
+console.log('Lab: existing homepage, design, scripts, artwork, and CMS data copied; no MP3s copied.');
