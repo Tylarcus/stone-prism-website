@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.astro/
+public/
+tina/__generated__/
+.env
+.env.*
+!.env.example
+.wrangler/

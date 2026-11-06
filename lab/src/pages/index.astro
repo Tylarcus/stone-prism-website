@@ -1,0 +1,27 @@
+---
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import TinaIsland from '@tinacms/astro/TinaIsland.astro';
+import HeroTagline from '../components/HeroTagline.astro';
+import { islands } from '../lib/islands';
+import { getHomepage } from '../lib/data';
+import { splitLegacyHomepage } from '../../scripts/split-home.mjs';
+
+const originalHtml = readFileSync(fileURLToPath(new URL('../../../index.html', import.meta.url)), 'utf8');
+const { head, before, after } = splitLegacyHomepage(originalHtml);
+const homepage = (await getHomepage()).data.homepage;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <Fragment set:html={head} />
+    <meta name="robots" content="noindex,nofollow" />
+  </head>
+  <body data-cms-page="home">
+    <Fragment set:html={before} />
+    <TinaIsland name="hero" wrapper={islands.hero.wrapper} params={{}} primary>
+      <HeroTagline data={homepage} />
+    </TinaIsland>
+    <Fragment set:html={after} />
+  </body>
+</html>

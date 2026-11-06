@@ -1,0 +1,27 @@
+{
+  "name": "malevolent-tina-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22.22.0"},
+  "scripts": {
+    "prepare:static": "node scripts/prepare-static.mjs",
+    "predev": "npm run prepare:static",
+    "dev": "tinacms dev -c \"astro dev\"",
+    "prebuild": "npm run prepare:static",
+    "build": "tinacms build --local --skip-cloud-checks -c \"astro build\"",
+    "preview": "astro preview",
+    "test": "node --test scripts/*.test.mjs"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^13.7.0",
+    "@astrojs/node": "^10.1.4",
+    "@tinacms/astro": "^0.8.0",
+    "astro": "^6.4.4",
+    "tinacms": "^3.15.0"
+  },
+  "devDependencies": {
+    "@tinacms/cli": "^4.0.4",
+    "typescript": "^6.0.3"
+  }
+}

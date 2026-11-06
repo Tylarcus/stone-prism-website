@@ -1,0 +1,7 @@
+---
+import { tinaField } from '@tinacms/astro/tina-field';
+import type { CmsHomepage } from '../lib/data';
+interface Props { data?: CmsHomepage | null; }
+const { data } = Astro.props;
+---
+{data && <p class="hero-kicker" data-tina-field={tinaField(data, 'tagline')}>{data.tagline}</p>}
